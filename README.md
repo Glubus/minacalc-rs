@@ -1,65 +1,65 @@
 # MinaCalc Rust Bindings
 
-Bindings Rust pour la bibliothèque MinaCalc C++ de calcul de difficulté pour les jeux de rythme.
+Rust bindings for the MinaCalc C++ library for rhythm game difficulty calculation.
 
 ## Description
 
-Ce projet fournit des bindings Rust sûrs et idiomatiques pour l'API C++ de MinaCalc, permettant de calculer les scores de difficulté (MSD et SSR) pour les jeux de rythme comme Stepmania.
+This project provides safe and idiomatic Rust bindings for the MinaCalc C++ API, allowing you to calculate difficulty scores (MSD and SSR) for rhythm games like Stepmania.
 
-## Fonctionnalités
+## Features
 
-- **Calcul MSD** : Scores de difficulté pour tous les taux de musique (0.7x à 2.0x)
-- **Calcul SSR** : Scores de difficulté pour un taux et un objectif de score spécifiques
-- **Interface Rust idiomatique** : Gestion automatique de la mémoire et gestion d'erreurs
-- **Sécurité mémoire** : Utilisation de RAII pour éviter les fuites mémoire
+- **MSD Calculation** : Difficulty scores for all music rates (0.7x to 2.0x)
+- **SSR Calculation** : Difficulty scores for a specific rate and score goal
+- **Idiomatic Rust Interface** : Automatic memory management and error handling
+- **Memory Safety** : RAII usage to prevent memory leaks
 
 ## Installation
 
-### Prérequis
+### Prerequisites
 
 - Rust (version 1.70+)
-- Un compilateur C++ compatible (GCC, Clang, ou MSVC)
-- Les fichiers source C++ de MinaCalc (`API.h`, `API.cpp`, etc.)
+- A compatible C++ compiler (GCC, Clang, or MSVC)
+- MinaCalc C++ source files (`API.h`, `API.cpp`, etc.)
 
 ### Compilation
 
 ```bash
-# Cloner le projet
+# Clone the project
 git clone <repository-url>
 cd minacalc-rs
 
-# Compiler le projet
+# Build the project
 cargo build
 
-# Exécuter les tests
+# Run tests
 cargo test
 
-# Exécuter l'exemple
+# Run example
 cargo run --example basic_usage
 ```
 
-## Utilisation
+## Usage
 
-### Exemple basique
+### Basic Example
 
 ```rust
 use minacalc_rs::{Calc, Note, SkillsetScores};
 
 fn main() -> Result<(), Box<dyn std::error::Error>> {
-    // Créer une instance du calculateur
+    // Create a calculator instance
     let calc = Calc::new()?;
     
-    // Créer des données de notes
+    // Create note data
     let notes = vec![
         Note { notes: 4, row_time: 0.0 },
         Note { notes: 0, row_time: 0.5 },
         Note { notes: 4, row_time: 1.0 },
     ];
     
-    // Calculer les scores MSD
+    // Calculate MSD scores
     let msd_results = calc.calc_msd(&notes)?;
     
-    // Calculer les scores SSR pour 1.0x à 95%
+    // Calculate SSR scores for 1.0x at 95%
     let ssr_scores = calc.calc_ssr(&notes, 1.0, 95.0)?;
     
     println!("Overall MSD: {:.2}", msd_results.msds[3].overall);
@@ -69,42 +69,42 @@ fn main() -> Result<(), Box<dyn std::error::Error>> {
 }
 ```
 
-### API Principale
+### Main API
 
 #### `Calc`
 
-La structure principale pour effectuer les calculs.
+The main structure for performing calculations.
 
 ```rust
 impl Calc {
-    /// Crée une nouvelle instance de calculateur
+    /// Creates a new calculator instance
     pub fn new() -> Result<Self, &'static str>
     
-    /// Obtient la version du calculateur
+    /// Gets the calculator version
     pub fn version() -> i32
     
-    /// Calcule les scores MSD pour tous les taux de musique
+    /// Calculates MSD scores for all music rates
     pub fn calc_msd(&self, notes: &[Note]) -> Result<MsdForAllRates, &'static str>
     
-    /// Calcule les scores SSR pour un taux et un objectif spécifiques
+    /// Calculates SSR scores for a specific rate and goal
     pub fn calc_ssr(&self, notes: &[Note], music_rate: f32, score_goal: f32) -> Result<SkillsetScores, &'static str>
 }
 ```
 
 #### `Note`
 
-Représente une note dans le jeu de rythme.
+Represents a note in the rhythm game.
 
 ```rust
 pub struct Note {
-    pub notes: u32,      // Nombre de notes à cette position
-    pub row_time: f32,   // Temps de la rangée (en secondes)
+    pub notes: u32,      // Number of notes at this position
+    pub row_time: f32,   // Row time (in seconds)
 }
 ```
 
 #### `SkillsetScores`
 
-Contient les scores de difficulté pour différents skillsets.
+Contains difficulty scores for different skillsets.
 
 ```rust
 pub struct SkillsetScores {
@@ -121,65 +121,65 @@ pub struct SkillsetScores {
 
 #### `MsdForAllRates`
 
-Contient les scores MSD pour tous les taux de musique (0.7x à 2.0x).
+Contains MSD scores for all music rates (0.7x to 2.0x).
 
 ```rust
 pub struct MsdForAllRates {
-    pub msds: [SkillsetScores; 14], // 14 taux de 0.7x à 2.0x
+    pub msds: [SkillsetScores; 14], // 14 rates from 0.7x to 2.0x
 }
 ```
 
-## Structure du Projet
+## Project Structure
 
 ```
 minacalc-rs/
-├── Cargo.toml          # Configuration du projet Rust
-├── build.rs            # Script de compilation C++
-├── API.h               # Header C++ original
-├── API.cpp             # Implémentation C++ originale
-├── NoteDataStructures.h # Structures de données C++
+├── Cargo.toml          # Rust project configuration
+├── build.rs            # C++ compilation script
+├── API.h               # Original C++ header
+├── API.cpp             # Original C++ implementation
+├── NoteDataStructures.h # C++ data structures
 ├── src/
-│   ├── lib.rs          # Point d'entrée de la bibliothèque
-│   ├── bindings.rs     # Bindings FFI générés automatiquement
-│   └── wrapper.rs      # Interface Rust idiomatique
+│   ├── lib.rs          # Library entry point
+│   ├── bindings.rs     # Auto-generated FFI bindings
+│   └── wrapper.rs      # Idiomatic Rust interface
 ├── examples/
-│   └── basic_usage.rs  # Exemple d'utilisation
-└── README.md           # Ce fichier
+│   └── basic_usage.rs  # Usage example
+└── README.md           # This file
 ```
 
-## Gestion des Erreurs
+## Error Handling
 
-Les fonctions retournent des `Result` avec des messages d'erreur descriptifs :
+Functions return `Result` with descriptive error messages:
 
-- `"Failed to create calculator"` : Échec de création du calculateur
-- `"No notes provided"` : Aucune note fournie
-- `"Music rate must be positive"` : Taux de musique invalide
-- `"Score goal must be between 0 and 100"` : Objectif de score invalide
+- `"Failed to create calculator"` : Calculator creation failed
+- `"No notes provided"` : No notes provided
+- `"Music rate must be positive"` : Invalid music rate
+- `"Score goal must be between 0 and 100"` : Invalid score goal
 
 ## Tests
 
-Exécutez les tests avec :
+Run tests with:
 
 ```bash
 cargo test
 ```
 
-Les tests incluent :
-- Vérification de la version du calculateur
-- Tests de conversion de types
-- Tests de création d'instances
+Tests include:
+- Calculator version verification
+- Type conversion tests
+- Instance creation tests
 
-## Licence
+## License
 
-MIT License - voir le fichier LICENSE pour plus de détails.
+MIT License - see LICENSE file for details.
 
-## Contribution
+## Contributing
 
-Les contributions sont les bienvenues ! N'hésitez pas à :
-- Signaler des bugs
-- Proposer des améliorations
-- Soumettre des pull requests
+Contributions are welcome! Feel free to:
+- Report bugs
+- Suggest improvements
+- Submit pull requests
 
-## Remerciements
+## Acknowledgments
 
-Ce projet est basé sur la bibliothèque MinaCalc originale développée pour Stepmania.
+This project is based on the original MinaCalc library developed for Stepmania.
