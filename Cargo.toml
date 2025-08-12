@@ -6,7 +6,7 @@ description = "Rust bindings for MinaCalc C++ library (Etterna rating calculator
 license = "MIT"
 authors = ["Glubus <mael.chevalleraud@gmail.com>"]
 repository = "https://github.com/Glubus/minacalc-rs"
-keywords = ["rhythm-game", "difficulty-calculator", "stepmania", "etterna", "minacalc"]
+keywords = ["rhythm-game", "difficulty", "stepmania", "etterna", "minacalc"]
 categories = ["game-development"]
 
 [lib]
