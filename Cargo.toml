@@ -4,6 +4,10 @@ version = "0.1.0"
 edition = "2021"
 description = "Rust bindings for MinaCalc C++ library (Etterna rating calculator)"
 license = "MIT"
+authors = ["Glubus <mael.chevalleraud@gmail.com>"]
+repository = "https://github.com/Glubus/minacalc-rs"
+keywords = ["rhythm-game", "difficulty-calculator", "stepmania", "etterna", "minacalc"]
+categories = ["game-development"]
 
 [lib]
 name = "minacalc_rs"
