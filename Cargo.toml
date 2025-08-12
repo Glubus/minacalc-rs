@@ -1,0 +1,19 @@
+[package]
+name = "minacalc-rs"
+version = "0.1.0"
+edition = "2021"
+description = "Rust bindings for MinaCalc C++ library (Etterna rating calculator)"
+license = "MIT"
+
+[lib]
+name = "minacalc_rs"
+crate-type = ["cdylib", "rlib"]
+
+[dependencies]
+
+[build-dependencies]
+cc = "1.0"
+bindgen = "0.72"
+
+[dev-dependencies]
+rosu-map = "0.2"
