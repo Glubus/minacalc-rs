@@ -32,6 +32,7 @@ extern "C" {
 
 
 
+
 	MsdForAllRates calc_msd(CalcHandle *calc, const NoteInfo *rows, size_t num_rows) {
 		std::vector<NoteInfo> note_info(rows, rows + num_rows);
 

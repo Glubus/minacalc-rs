@@ -150,7 +150,7 @@ impl Calc {
         let note_infos: Vec<NoteInfo> = notes.iter().map(|&note| note.into()).collect();
         
         let result = unsafe {
-            calc_msd(self.handle, note_infos.as_ptr(), note_infos.len() as u64)
+            calc_msd(self.handle, note_infos.as_ptr(), note_infos.len())
         };
         
         Ok(result.into())
@@ -179,7 +179,7 @@ impl Calc {
         let mut note_infos: Vec<NoteInfo> = notes.iter().map(|&note| note.into()).collect();
         
         let result = unsafe {
-            calc_ssr(self.handle, note_infos.as_mut_ptr(), note_infos.len() as u64, music_rate, score_goal)
+            calc_ssr(self.handle, note_infos.as_mut_ptr(), note_infos.len(), music_rate, score_goal)
         };
         
         Ok(result.into())

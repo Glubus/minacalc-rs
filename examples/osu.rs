@@ -21,7 +21,7 @@ fn hit_object_to_note(hit_object: HitObject) -> Result<Note, String> {
     let time = (hit_object.start_time as f32) / 1000.0; // Convert ms to seconds
     match hit_object.kind {
         HitObjectKind::Circle(hit_object) => Ok(Note{notes: get_columns(hit_object.pos.x)?, row_time: time}),
-        HitObjectKind::Slider(hit_object) => Ok(Note{notes: get_columns(hit_object.pos.x)?, row_time: time}),
+        HitObjectKind::Hold(hit_object) => Ok(Note{notes: get_columns(hit_object.pos_x)?, row_time: time}),
         _ => Err(format!("not supported kind {:#?}", hit_object.kind))
     }
 }
@@ -95,4 +95,6 @@ fn main() {
     
     println!("📊 MSD Results:");
     println!("{:?}", msd);
+
+    
 }
