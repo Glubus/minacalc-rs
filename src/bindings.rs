@@ -1,2 +1,2 @@
-// Ce fichier sera remplacé par les bindings générés automatiquement par bindgen
-// Il est inclus ici pour éviter les erreurs de compilation avant la génération
+// This file will be replaced by automatically generated bindings from bindgen
+// It is included here to avoid compilation errors before generation

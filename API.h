@@ -4,7 +4,9 @@
 
 typedef struct NoteInfo NoteInfo;
 
-typedef struct CalcHandle {} CalcHandle;
+typedef struct CalcHandle {
+    char _dummy; // Dummy member to ensure non-zero size
+} CalcHandle;
 
 typedef struct Ssr {
 	float overall;

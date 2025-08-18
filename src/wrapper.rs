@@ -1,11 +1,11 @@
 use crate::{NoteInfo, Ssr, MsdForAllRates as BindingsMsdForAllRates, CalcHandle, create_calc, calc_version, calc_msd, calc_ssr, destroy_calc};
 
-/// Représente une note dans le jeu de rythme
+/// Represents a note in the rhythm game
 #[derive(Debug, Clone, Copy)]
 pub struct Note {
-    /// Nombre de notes à cette position temporelle
+    /// Number of notes at this time position
     pub notes: u32,
-    /// Temps de la rangée (en secondes)
+    /// Row time (in seconds)
     pub row_time: f32,
 }
 
@@ -27,7 +27,7 @@ impl From<NoteInfo> for Note {
     }
 }
 
-/// Représente les scores de difficulté pour différents skillsets
+/// Represents difficulty scores for different skillsets
 #[derive(Debug, Clone, Copy)]
 pub struct SkillsetScores {
     pub overall: f32,
@@ -70,7 +70,7 @@ impl From<SkillsetScores> for Ssr {
     }
 }
 
-/// Représente les scores MSD pour tous les taux de musique (0.7x à 2.0x)
+/// Represents MSD scores for all music rates (0.7x to 2.0x)
 #[derive(Debug, Clone)]
 pub struct MsdForAllRates {
     pub msds: [SkillsetScores; 14],
@@ -120,13 +120,13 @@ impl From<BindingsMsdForAllRates> for MsdForAllRates {
     }
 }
 
-/// Gestionnaire principal pour les calculs de difficulté
+/// Main handler for difficulty calculations
 pub struct Calc {
     handle: *mut CalcHandle,
 }
 
 impl Calc {
-    /// Crée une nouvelle instance de calculateur
+    /// Creates a new calculator instance
     pub fn new() -> Result<Self, &'static str> {
         let handle = unsafe { create_calc() };
         if handle.is_null() {
@@ -135,18 +135,18 @@ impl Calc {
         Ok(Calc { handle })
     }
     
-    /// Obtient la version du calculateur
+    /// Gets the calculator version
     pub fn version() -> i32 {
         unsafe { calc_version() }
     }
     
-    /// Calcule les scores MSD pour tous les taux de musique
+    /// Calculates MSD scores for all music rates
     pub fn calc_msd(&self, notes: &[Note]) -> Result<MsdForAllRates, &'static str> {
         if notes.is_empty() {
             return Err("No notes provided");
         }
         
-        // Convertir les notes en format C
+        // Convert notes to C format
         let note_infos: Vec<NoteInfo> = notes.iter().map(|&note| note.into()).collect();
         
         let result = unsafe {
@@ -156,7 +156,7 @@ impl Calc {
         Ok(result.into())
     }
     
-    /// Calcule les scores SSR pour un taux de musique et un objectif de score spécifiques
+    /// Calculates SSR scores for a specific music rate and score goal
     pub fn calc_ssr(
         &self,
         notes: &[Note],
@@ -175,7 +175,7 @@ impl Calc {
             return Err("Score goal must be between 0 and 100");
         }
         
-        // Convertir les notes en format C
+        // Convert notes to C format
         let mut note_infos: Vec<NoteInfo> = notes.iter().map(|&note| note.into()).collect();
         
         let result = unsafe {
@@ -200,7 +200,7 @@ impl Default for Calc {
     }
 }
 
-// Tests unitaires
+// Unit tests
 #[cfg(test)]
 mod tests {
     use super::*;

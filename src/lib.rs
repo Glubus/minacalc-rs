@@ -4,7 +4,7 @@
 
 mod wrapper;
 
-// Inclure les bindings générés automatiquement
+// Include automatically generated bindings
 include!(concat!(env!("OUT_DIR"), "/bindings.rs"));
 
 pub use wrapper::*;

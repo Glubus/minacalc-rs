@@ -10,8 +10,17 @@ fn main() {
           .file("API.cpp")
           .file("MinaCalc/MinaCalc.cpp")
           .include(".")
-          .include("MinaCalc")
-          .flag("-std=c++17");
+          .include("MinaCalc");
+    
+    // Détecter le compilateur et ajouter les flags appropriés
+    let target = env::var("TARGET").unwrap_or_default();
+    if target.contains("msvc") {
+        // MSVC: utiliser /std:c++17 au lieu de -std=c++17
+        build.flag("/std:c++17");
+    } else {
+        // GCC/Clang: utiliser -std=c++17
+        build.flag("-std=c++17");
+    }
     
     // Compiler la bibliothèque
     build.compile("minacalc");
