@@ -31,7 +31,6 @@ MinaCalc is a sophisticated difficulty calculator for rhythm games like Stepmani
 - **C++ Compiler**: 
   - Windows: MSVC (Visual Studio 2019+)
   - Linux: GCC 7+ or Clang 6+
-  - macOS: Xcode Command Line Tools
 
 ### Quick Start
 
@@ -43,75 +42,6 @@ cargo add minacalc-rs
 git clone https://github.com/your-username/minacalc-rs.git
 cd minacalc-rs
 cargo build --release
-```
-
-## Usage
-
-### Basic Example
-
-```rust
-use minacalc_rs::{Calc, Note, SkillsetScores};
-
-fn main() -> Result<(), Box<dyn std::error::Error>> {
-    // Create calculator instance
-    let calc = Calc::new()?;
-    
-    // Define note data (simplified example)
-    let notes = vec![
-        Note { notes: 4, row_time: 0.0 },   // 4 notes at 0 seconds
-        Note { notes: 0, row_time: 0.5 },   // 0 notes at 0.5 seconds
-        Note { notes: 4, row_time: 1.0 },   // 4 notes at 1 second
-        Note { notes: 2, row_time: 1.5 },   // 2 notes at 1.5 seconds
-    ];
-    
-    // Calculate MSD scores for all rates
-    let msd_results = calc.calc_msd(&notes)?;
-    
-    // Calculate SSR scores for 1.0x rate at 95% goal
-    let ssr_scores = calc.calc_ssr(&notes, 1.0, 95.0)?;
-    
-    // Display results
-    println!("=== MSD Results (1.0x rate) ===");
-    println!("Overall: {:.2}", msd_results.msds[3].overall);
-    println!("Stream: {:.2}", msd_results.msds[3].stream);
-    println!("Jumpstream: {:.2}", msd_results.msds[3].jumpstream);
-    
-    println!("\n=== SSR Results (1.0x, 95% goal) ===");
-    println!("Overall: {:.2}", ssr_scores.overall);
-    println!("Technical: {:.2}", ssr_scores.technical);
-    
-    Ok(())
-}
-```
-
-### Advanced Usage
-
-```rust
-use minacalc_rs::{Calc, Note, SkillsetScores, MsdForAllRates};
-
-fn analyze_song(notes: &[Note]) -> Result<(), Box<dyn std::error::Error>> {
-    let calc = Calc::new()?;
-    
-    // Get MSD for all rates
-    let msd_all_rates = calc.calc_msd(notes)?;
-    
-    // Analyze different rates
-    let rates = [0.7, 0.8, 0.9, 1.0, 1.1, 1.2, 1.3, 1.4, 1.5, 1.6, 1.7, 1.8, 1.9, 2.0];
-    
-    for (i, rate) in rates.iter().enumerate() {
-        let scores = &msd_all_rates.msds[i];
-        println!("Rate {:.1}x: Overall={:.2}, Stream={:.2}, Tech={:.2}", 
-                rate, scores.overall, scores.stream, scores.technical);
-    }
-    
-    // Calculate SSR for different goals
-    for goal in [90.0, 95.0, 98.0] {
-        let ssr = calc.calc_ssr(notes, 1.0, goal)?;
-        println!("SSR at {}%: {:.2}", goal, ssr.overall);
-    }
-    
-    Ok(())
-}
 ```
 
 ## API Reference
