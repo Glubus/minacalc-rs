@@ -196,31 +196,10 @@ See the `examples/` directory for complete working examples:
 - `basic_usage.rs`: Simple MSD/SSR calculation
 - `osu.rs`: Integration with osu! beatmap parsing
 
-## Performance
-
-The Rust bindings add minimal overhead to the underlying C++ library:
-
-- **Memory**: ~1KB additional overhead per calculator instance
-- **CPU**: <1% overhead for typical calculations
-- **Startup**: ~1ms initialization time
-
 ## Contributing
 
 We welcome contributions! Please see our [Contributing Guide](CONTRIBUTING.md) for details.
 
-### Development Workflow
-
-1. Fork the repository
-2. Create a feature branch: `git checkout -b feature/amazing-feature`
-3. Make your changes and add tests
-4. Run tests: `cargo test`
-5. Commit your changes: `git commit -m 'Add amazing feature'`
-6. Push to the branch: `git push origin feature/amazing-feature`
-7. Open a Pull Request
-
-## License
-
-This project is licensed under the MIT License - see the [LICENSE](LICENSE) file for details.
 
 ## Acknowledgments
 
