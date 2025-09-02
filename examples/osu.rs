@@ -1,4 +1,4 @@
-use minacalc_rs::{Calc, OsuCalcExt};
+use minacalc_rs::{Calc, OsuCalcExt, HashMapCalcExt, AllRates};
 use std::path::PathBuf;
 
 fn main() -> Result<(), Box<dyn std::error::Error>> {
@@ -13,7 +13,7 @@ fn main() -> Result<(), Box<dyn std::error::Error>> {
     if beatmap_path.exists() {
         println!("📁 Processing beatmap: {}", beatmap_path.display());
         
-        let msd_results = calc.calculate_msd_from_osu_file(beatmap_path)?;
+        let msd_results: AllRates = calc.calculate_msd_from_osu_file(beatmap_path)?;
         println!("✅ Beatmap processed successfully!");
         
         // Method 1: Direct access to specific rates
@@ -29,12 +29,12 @@ fn main() -> Result<(), Box<dyn std::error::Error>> {
             }
         }
         
-        // Method 2: Using HashMap conversion (convert to hashmap type first)
+        // Method 2: Using HashMap conversion (convert to wrapper type first)
         println!("\n--- HashMap Method ---");
-        let hashmap_results: minacalc_rs::MsdForAllRates = msd_results.into();
+        let hashmap_results = msd_results;
         let hashmap = hashmap_results.as_hashmap()?;
         
-        for (rate, scores) in hashmap.iter().take(5) {
+        for (rate, scores) in hashmap.iter() {
             println!("{}: Overall={:.2}, Stream={:.2}, Tech={:.2}", 
                      rate, scores.overall, scores.stream, scores.technical);
         }

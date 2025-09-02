@@ -106,11 +106,11 @@ impl From<SkillsetScores> for Ssr {
 
 /// Represents MSD scores for all music rates (0.7x to 2.0x)
 #[derive(Debug, Clone)]
-pub struct MsdForAllRates {
+pub struct AllRates {
     pub msds: [SkillsetScores; 14],
 }
 
-impl MsdForAllRates {
+impl AllRates {
     /// Validates all MSD scores
     pub fn validate(&self) -> MinaCalcResult<()> {
         for (i, scores) in self.msds.iter().enumerate() {
@@ -121,8 +121,8 @@ impl MsdForAllRates {
     }
 }
 
-impl From<MsdForAllRates> for super::MsdForAllRates {
-    fn from(msd: MsdForAllRates) -> Self {
+impl From<AllRates> for super::MsdForAllRates {
+    fn from(msd: AllRates) -> Self {
         let mut bindings_msd = super::MsdForAllRates {
             msds: [Ssr {
                 overall: 0.0,
@@ -144,7 +144,7 @@ impl From<MsdForAllRates> for super::MsdForAllRates {
     }
 }
 
-impl From<BindingsMsdForAllRates> for MsdForAllRates {
+impl From<BindingsMsdForAllRates> for AllRates {
     fn from(bindings_msd: BindingsMsdForAllRates) -> Self {
         let mut msds = [SkillsetScores {
             overall: 0.0,
@@ -161,7 +161,7 @@ impl From<BindingsMsdForAllRates> for MsdForAllRates {
             msds[i] = (*ssr).into();
         }
         
-        MsdForAllRates { msds }
+        AllRates { msds }
     }
 }
 
@@ -187,7 +187,7 @@ impl Calc {
     }
     
     /// Calculates MSD scores for all music rates
-    pub fn calc_msd(&self, notes: &[Note]) -> MinaCalcResult<MsdForAllRates> {
+    pub fn calc_msd(&self, notes: &[Note]) -> MinaCalcResult<AllRates> {
         if notes.is_empty() {
             return Err(MinaCalcError::NoNotesProvided);
         }
@@ -204,7 +204,7 @@ impl Calc {
             calc_msd(self.handle, note_infos.as_ptr(), note_infos.len())
         };
         
-        let msd: MsdForAllRates = result.into();
+        let msd: AllRates = result.into();
         msd.validate()?;
         Ok(msd)
     }

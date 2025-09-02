@@ -5,7 +5,7 @@ use rosu_map::section::hit_objects::HitObjectKind;
 use std::path::PathBuf;
 use std::collections::HashMap;
 
-use crate::{Calc, Note};
+use crate::{Calc, Note, wrapper::AllRates};
 use crate::error::{OsuError, OsuResult, MinaCalcResult};
 
 /// Extension trait for Calc to handle osu! beatmap operations
@@ -23,7 +23,7 @@ pub trait OsuCalcExt {
     fn security_check(beatmap: &Beatmap) -> OsuResult<()>;
     
     /// Calculates MSD from osu! file path
-    fn calculate_msd_from_osu_file(&self, path: PathBuf) -> MinaCalcResult<crate::MsdForAllRates>;
+    fn calculate_msd_from_osu_file(&self, path: PathBuf) -> MinaCalcResult<AllRates>;
     
     /// Validates a collection of notes
     fn validate_notes(notes: &[Note]) -> OsuResult<()>;
@@ -140,7 +140,7 @@ impl OsuCalcExt for Calc {
         Ok(())
     }
 
-    fn calculate_msd_from_osu_file(&self, path: PathBuf) -> MinaCalcResult<crate::MsdForAllRates> {
+    fn calculate_msd_from_osu_file(&self, path: PathBuf) -> MinaCalcResult<AllRates> {
         let beatmap: Beatmap = rosu_map::from_path(&path)
             .map_err(|e| OsuError::ParseFailed(format!("Failed to parse {}: {}", path.display(), e)))?;
 
@@ -149,6 +149,6 @@ impl OsuCalcExt for Calc {
 
         let msd = self.calc_msd(&notes)?;
 
-        Ok(msd.into())
+        Ok(msd)
     }
 }
