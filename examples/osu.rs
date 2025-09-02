@@ -1,100 +1,79 @@
-use rosu_map::{Beatmap};
-use rosu_map::section::general::GameMode;
-use rosu_map::section::hit_objects::HitObject;
-use rosu_map::section::hit_objects::HitObjectKind;
+use minacalc_rs::{Calc, OsuCalcExt};
+use std::path::PathBuf;
 
-use minacalc_rs::{Calc, Note};
-
-/// Converts X position of a note to bitflag for 4K
-fn get_columns(x: f32) -> Result<u32, String> {
-    match x {
-        64.0 => Ok(1),  // bit flag 0b0001
-        192.0 => Ok(2), // bit flag 0b0010
-        320.0 => Ok(4), // bit flag 0b0100
-        448.0 => Ok(8), // bit flag 0b1000
-        _ => Err(format!("not supported columns {x}"))
-    }
-}
-
-/// Converts a HitObject to Note for MinaCalc
-fn hit_object_to_note(hit_object: HitObject) -> Result<Note, String> {
-    let time = (hit_object.start_time as f32) / 1000.0; // Convert ms to seconds
-    match hit_object.kind {
-        HitObjectKind::Circle(hit_object) => Ok(Note{notes: get_columns(hit_object.pos.x)?, row_time: time}),
-        HitObjectKind::Hold(hit_object) => Ok(Note{notes: get_columns(hit_object.pos_x)?, row_time: time}),
-        _ => Err(format!("not supported kind {:#?}", hit_object.kind))
-    }
-}
-
-/// Merges notes that have the same time by adding their bitflags
-fn merge_notes_at_same_time(mut raw_notes: Vec<Note>) -> Vec<Note> {
-    raw_notes.sort_by(|a, b| a.row_time.partial_cmp(&b.row_time).unwrap());
+fn main() -> Result<(), Box<dyn std::error::Error>> {
+    println!("=== MinaCalc Osu! Beatmap Processing Example ===");
     
-    let mut notes = Vec::new();
-    let mut current_time = -1.0;
-    let mut current_notes = 0u32;
+    let calc = Calc::new()?;
+    println!("✅ Calculator created successfully");
     
-    for note in &raw_notes {
-        if note.row_time == current_time {
-            // Same time: add bitflags
-            current_notes |= note.notes;
-        } else {
-            // New time: save previous note and start a new one
-            if current_time >= 0.0 {
-                notes.push(Note {
-                    notes: current_notes,
-                    row_time: current_time,
-                });
+    // Example 1: Process a beatmap file
+    let beatmap_path = PathBuf::from("assets/test.osu");
+    
+    if beatmap_path.exists() {
+        println!("📁 Processing beatmap: {}", beatmap_path.display());
+        
+        let msd_results = calc.calculate_msd_from_osu_file(beatmap_path)?;
+        println!("✅ Beatmap processed successfully!");
+        
+        // Method 1: Direct access to specific rates
+        println!("\n--- Direct Access Method ---");
+        let rates = [0.7, 1.0, 1.5, 2.0];
+        let rate_indices = [0, 3, 8, 13];
+        
+        for (rate, &index) in rates.iter().zip(rate_indices.iter()) {
+            if index < msd_results.msds.len() {
+                let scores = msd_results.msds[index];
+                println!("{:.1}x: Overall={:.2}, Stream={:.2}, Tech={:.2}", 
+                         rate, scores.overall, scores.stream, scores.technical);
             }
-            current_time = note.row_time;
-            current_notes = note.notes;
+        }
+        
+        // Method 2: Using HashMap conversion (convert to hashmap type first)
+        println!("\n--- HashMap Method ---");
+        let hashmap_results: minacalc_rs::MsdForAllRates = msd_results.into();
+        let hashmap = hashmap_results.as_hashmap()?;
+        
+        for (rate, scores) in hashmap.iter().take(5) {
+            println!("{}: Overall={:.2}, Stream={:.2}, Tech={:.2}", 
+                     rate, scores.overall, scores.stream, scores.technical);
+        }
+        
+        // Method 3: Get specific rates with HashMap
+        println!("\n--- Specific Rate Access ---");
+        if let Some(scores) = hashmap.get("1.0") {
+            println!("1.0x rate: Overall={:.2}, Stream={:.2}", 
+                     scores.overall, scores.stream);
+        }
+        
+        if let Some(scores) = hashmap.get("2.0") {
+            println!("2.0x rate: Overall={:.2}, Stream={:.2}", 
+                     scores.overall, scores.stream);
+        }
+        
+    } else {
+        println!("⚠️  Beatmap file not found: {}", beatmap_path.display());
+        println!("   Creating sample notes instead...");
+        
+        // Example 2: Manual notes with HashMap
+        let notes = vec![
+            minacalc_rs::Note { notes: 1, row_time: 0.0 },    // Left column
+            minacalc_rs::Note { notes: 8, row_time: 1.0 },    // Right column
+            minacalc_rs::Note { notes: 15, row_time: 2.0 },   // All columns
+        ];
+        
+        let msd_results = calc.calc_msd(&notes)?;
+        let hashmap = msd_results.as_hashmap()?;
+        
+        println!("✅ Sample notes processed!");
+        println!("Available rates: {:?}", hashmap.keys().collect::<Vec<_>>());
+        
+        for (rate, scores) in hashmap.iter().take(3) {
+            println!("{}: Overall={:.2}, Stream={:.2}", 
+                     rate, scores.overall, scores.stream);
         }
     }
     
-    // Don't forget the last note
-    if current_time >= 0.0 {
-        notes.push(Note {
-            notes: current_notes,
-            row_time: current_time,
-        });
-    }
-    
-    notes
-}
-
-fn main() {
-    // Load and parse the .osu file
-    let map = include_str!("../assets/test.osu");
-    let beatmap: Beatmap = rosu_map::from_str(map).unwrap();
-    
-    // Check that it's a 4K Mania map
-    if beatmap.mode != GameMode::Mania {
-        println!("Map is not mania");
-        return;
-    }
-    if beatmap.circle_size != 4.0 {
-        println!("Map is not 4K");
-        return;
-    }
-    
-    // Convert HitObjects to Notes
-    let mut raw_notes = Vec::new();
-    for hit_object in beatmap.hit_objects {
-        match hit_object_to_note(hit_object) {
-            Ok(note) => raw_notes.push(note),
-            Err(e) => println!("Error: {}", e)
-        }
-    }
-    
-    // Merge notes that have the same time
-    let notes = merge_notes_at_same_time(raw_notes);
-    
-    // Calculate MSD scores
-    let calc = Calc::new().unwrap();
-    let msd = calc.calc_msd(&notes).unwrap();
-    
-    println!("📊 MSD Results:");
-    println!("{:?}", msd);
-
-    
+    println!("\n🎉 Example completed successfully!");
+    Ok(())
 }

@@ -1,6 +1,6 @@
 [package]
 name = "minacalc-rs"
-version = "0.1.3"
+version = "0.2.0"
 edition = "2021"
 description = "Rust bindings for MinaCalc C++ library (Etterna rating calculator)"
 license = "MIT"
@@ -13,11 +13,38 @@ categories = ["game-development"]
 name = "minacalc_rs"
 crate-type = ["cdylib", "rlib"]
 
+[features]
+default = ["hashmap"]
+thread = ["dep:parking_lot", "dep:once_cell"]
+hashmap = []
+osu = ["dep:rosu-map"]
+
 [dependencies]
+parking_lot = { version = "0.12", optional = true }
+once_cell = { version = "1.19", optional = true }
+rosu-map = { version = "0.2", optional = true }
 
 [build-dependencies]
 cc = "1.0"
 bindgen = "0.72"
 
 [dev-dependencies]
-rosu-map = "0.2"
+
+[[example]]
+name = "basic_usage"
+path = "examples/basic_usage.rs"
+
+[[example]]
+name = "hashmap_usage"
+path = "examples/hashmap_usage.rs"
+required-features = ["hashmap"]
+
+[[example]]
+name = "thread_safe_usage"
+path = "examples/thread_safe_usage.rs"
+required-features = ["thread"]
+
+[[example]]
+name = "osu"
+path = "examples/osu.rs"
+required-features = ["osu", "hashmap"]

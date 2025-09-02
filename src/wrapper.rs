@@ -1,4 +1,5 @@
 use crate::{NoteInfo, Ssr, MsdForAllRates as BindingsMsdForAllRates, CalcHandle, create_calc, calc_version, calc_msd, calc_ssr, destroy_calc};
+use crate::error::{MinaCalcError, MinaCalcResult};
 
 /// Represents a note in the rhythm game
 #[derive(Debug, Clone, Copy)]
@@ -7,6 +8,22 @@ pub struct Note {
     pub notes: u32,
     /// Row time (in seconds)
     pub row_time: f32,
+}
+
+impl Note {
+    /// Validates note data
+    pub fn validate(&self) -> MinaCalcResult<()> {
+        if self.notes == 0 {
+            return Err(MinaCalcError::InvalidNoteData("Note must have at least one column".to_string()));
+        }
+        if self.notes > 0b1111 {
+            return Err(MinaCalcError::InvalidNoteData("Note bitflags exceed 4K limit".to_string()));
+        }
+        if self.row_time < 0.0 {
+            return Err(MinaCalcError::InvalidNoteData("Row time cannot be negative".to_string()));
+        }
+        Ok(())
+    }
 }
 
 impl From<Note> for NoteInfo {
@@ -38,6 +55,23 @@ pub struct SkillsetScores {
     pub jackspeed: f32,
     pub chordjack: f32,
     pub technical: f32,
+}
+
+impl SkillsetScores {
+    /// Validates scores are within reasonable bounds
+    pub fn validate(&self) -> MinaCalcResult<()> {
+        let scores = [
+            self.overall, self.stream, self.jumpstream, self.handstream,
+            self.stamina, self.jackspeed, self.chordjack, self.technical
+        ];
+        
+        for score in scores {
+            if score < 0.0 || score > 1000.0 {
+                return Err(MinaCalcError::InvalidNoteData(format!("Score {} is out of reasonable bounds", score)));
+            }
+        }
+        Ok(())
+    }
 }
 
 impl From<Ssr> for SkillsetScores {
@@ -74,6 +108,17 @@ impl From<SkillsetScores> for Ssr {
 #[derive(Debug, Clone)]
 pub struct MsdForAllRates {
     pub msds: [SkillsetScores; 14],
+}
+
+impl MsdForAllRates {
+    /// Validates all MSD scores
+    pub fn validate(&self) -> MinaCalcResult<()> {
+        for (i, scores) in self.msds.iter().enumerate() {
+            scores.validate()
+                .map_err(|e| MinaCalcError::InvalidNoteData(format!("Rate {}: {}", (i as f32) / 10.0 + 0.7, e)))?;
+        }
+        Ok(())
+    }
 }
 
 impl From<MsdForAllRates> for super::MsdForAllRates {
@@ -121,16 +166,17 @@ impl From<BindingsMsdForAllRates> for MsdForAllRates {
 }
 
 /// Main handler for difficulty calculations
+#[derive(Clone)]
 pub struct Calc {
     handle: *mut CalcHandle,
 }
 
 impl Calc {
     /// Creates a new calculator instance
-    pub fn new() -> Result<Self, &'static str> {
+    pub fn new() -> MinaCalcResult<Self> {
         let handle = unsafe { create_calc() };
         if handle.is_null() {
-            return Err("Failed to create calculator");
+            return Err(MinaCalcError::CalculatorCreationFailed);
         }
         Ok(Calc { handle })
     }
@@ -141,9 +187,14 @@ impl Calc {
     }
     
     /// Calculates MSD scores for all music rates
-    pub fn calc_msd(&self, notes: &[Note]) -> Result<MsdForAllRates, &'static str> {
+    pub fn calc_msd(&self, notes: &[Note]) -> MinaCalcResult<MsdForAllRates> {
         if notes.is_empty() {
-            return Err("No notes provided");
+            return Err(MinaCalcError::NoNotesProvided);
+        }
+        
+        // Validate all notes
+        for note in notes {
+            note.validate()?;
         }
         
         // Convert notes to C format
@@ -153,7 +204,9 @@ impl Calc {
             calc_msd(self.handle, note_infos.as_ptr(), note_infos.len())
         };
         
-        Ok(result.into())
+        let msd: MsdForAllRates = result.into();
+        msd.validate()?;
+        Ok(msd)
     }
     
     /// Calculates SSR scores for a specific music rate and score goal
@@ -162,17 +215,22 @@ impl Calc {
         notes: &[Note],
         music_rate: f32,
         score_goal: f32,
-    ) -> Result<SkillsetScores, &'static str> {
+    ) -> MinaCalcResult<SkillsetScores> {
         if notes.is_empty() {
-            return Err("No notes provided");
+            return Err(MinaCalcError::NoNotesProvided);
         }
         
         if music_rate <= 0.0 {
-            return Err("Music rate must be positive");
+            return Err(MinaCalcError::InvalidMusicRate(music_rate));
         }
         
         if score_goal <= 0.0 || score_goal > 100.0 {
-            return Err("Score goal must be between 0 and 100");
+            return Err(MinaCalcError::InvalidScoreGoal(score_goal));
+        }
+        
+        // Validate all notes
+        for note in notes {
+            note.validate()?;
         }
         
         // Convert notes to C format
@@ -182,14 +240,23 @@ impl Calc {
             calc_ssr(self.handle, note_infos.as_mut_ptr(), note_infos.len(), music_rate, score_goal)
         };
         
-        Ok(result.into())
+        let scores: SkillsetScores = result.into();
+        scores.validate()?;
+        Ok(scores)
+    }
+    
+    /// Validates the calculator handle is still valid
+    pub fn is_valid(&self) -> bool {
+        !self.handle.is_null()
     }
 }
 
 impl Drop for Calc {
     fn drop(&mut self) {
-        unsafe {
-            destroy_calc(self.handle);
+        if !self.handle.is_null() {
+            unsafe {
+                destroy_calc(self.handle);
+            }
         }
     }
 }
