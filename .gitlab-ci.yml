@@ -23,6 +23,7 @@ setup:
     - docker
   script:
     - apt-get update && apt-get install -y clang libclang-dev
+    - rustup default stable
     - rustup component add clippy rustfmt
   artifacts:
     paths:
