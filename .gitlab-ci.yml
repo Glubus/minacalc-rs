@@ -39,6 +39,7 @@ check:
   dependencies:
     - setup
   script:
+    - apt-get update && apt-get install -y clang libclang-dev
     - rustup default stable
     - cargo check --all-targets
 
@@ -50,6 +51,7 @@ lint:
   dependencies:
     - setup
   script:
+    - apt-get update && apt-get install -y clang libclang-dev
     - rustup default stable
     - cargo clippy --all-targets --all-features -- -D warnings
 
@@ -61,5 +63,6 @@ fmt:
   dependencies:
     - setup
   script:
+    - apt-get update && apt-get install -y clang libclang-dev
     - rustup default stable
     - cargo fmt --all -- --check
