@@ -1,6 +1,6 @@
 [package]
 name = "minacalc-rs"
-version = "0.2.0"
+version = "0.2.1"
 edition = "2021"
 description = "Rust bindings for MinaCalc C++ library (Etterna rating calculator)"
 license = "MIT"
@@ -18,6 +18,7 @@ default = ["hashmap"]
 thread = ["dep:parking_lot", "dep:once_cell"]
 hashmap = []
 osu = ["dep:rosu-map"]
+utils = []
 
 [dependencies]
 parking_lot = { version = "0.12", optional = true }
@@ -38,3 +39,8 @@ path = "examples/basic_usage.rs"
 name = "osu"
 path = "examples/osu.rs"
 required-features = ["osu", "hashmap"]
+
+[[example]]
+name = "utils_example"
+path = "examples/utils_example.rs"
+required-features = ["utils"]

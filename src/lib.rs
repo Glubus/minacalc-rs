@@ -28,6 +28,9 @@ pub mod thread;
 #[cfg(feature = "osu")]
 pub mod osu;
 
+#[cfg(feature = "utils")]
+pub mod utils;
+
 // Re-export feature-gated modules
 #[cfg(feature = "hashmap")]
 pub use hashmap::*;
@@ -37,3 +40,6 @@ pub use thread::*;
 
 #[cfg(feature = "osu")]
 pub use osu::*;
+
+#[cfg(feature = "utils")]
+pub use utils::*;
