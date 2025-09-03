@@ -35,16 +35,6 @@ name = "basic_usage"
 path = "examples/basic_usage.rs"
 
 [[example]]
-name = "hashmap_usage"
-path = "examples/hashmap_usage.rs"
-required-features = ["hashmap"]
-
-[[example]]
-name = "thread_safe_usage"
-path = "examples/thread_safe_usage.rs"
-required-features = ["thread"]
-
-[[example]]
 name = "osu"
 path = "examples/osu.rs"
 required-features = ["osu", "hashmap"]
