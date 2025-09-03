@@ -39,6 +39,7 @@ check:
   dependencies:
     - setup
   script:
+    - rustup default stable
     - cargo check --all-targets
 
 lint:
@@ -49,6 +50,7 @@ lint:
   dependencies:
     - setup
   script:
+    - rustup default stable
     - cargo clippy --all-targets --all-features -- -D warnings
 
 fmt:
@@ -59,4 +61,5 @@ fmt:
   dependencies:
     - setup
   script:
+    - rustup default stable
     - cargo fmt --all -- --check
