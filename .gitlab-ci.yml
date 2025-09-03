@@ -1,0 +1,31 @@
+stages:
+  - check
+  - lint
+  - fmt
+
+check:
+  stage: check
+  image: rust:latest
+  tags:
+    - docker
+  script:
+    - rustup component add clippy rustfmt
+    - cargo check --all-targets
+
+lint:
+  stage: lint
+  image: rust:latest
+  tags:
+    - docker
+  script:
+    - rustup component add clippy
+    - cargo clippy --all-targets --all-features -- -D warnings
+
+fmt:
+  stage: fmt
+  image: rust:latest
+  tags:
+    - docker
+  script:
+    - rustup component add rustfmt
+    - cargo fmt --all -- --check
