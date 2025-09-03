@@ -2,226 +2,283 @@
 
 [![Crates.io](https://img.shields.io/crates/v/minacalc-rs)](https://crates.io/crates/minacalc-rs)
 [![Documentation](https://docs.rs/minacalc-rs/badge.svg)](https://docs.rs/minacalc-rs)
-[![License](https://img.shields.io/badge/license-MIT-blue.svg)](LICENSE)
+[![License: MIT](https://img.shields.io/badge/License-MIT-yellow.svg)](https://opensource.org/licenses/MIT)
 
-Safe and idiomatic Rust bindings for the MinaCalc C++ library, providing rhythm game difficulty calculation capabilities.
-
-## Overview
-
-MinaCalc is a sophisticated difficulty calculator for rhythm games like Stepmania, and similar games. This Rust crate provides a safe, memory-managed interface to the original C++ library, allowing you to calculate:
-
-- **MSD (Mina Skill Difficulty)** scores for all music rates (0.7x to 2.0x)
-- **SSR (Single Song Rating)** scores for specific rates and score goals
-- Multiple skillset evaluations (Stream, Jumpstream, Handstream, Stamina, etc.)
+Safe and ergonomic Rust bindings for the MinaCalc rhythm game difficulty calculator. This crate provides high-level Rust APIs for calculating difficulty scores in rhythm games like StepMania, Etterna, and osu!.
 
 ## Features
 
-- ✅ **Memory Safety**: RAII-based resource management prevents memory leaks
-- ✅ **Error Handling**: Comprehensive error handling with descriptive messages
-- ✅ **Cross-Platform**: Supports Windows (MSVC), Linux (GCC/Clang), and macOS
-- ✅ **C++17 Compatibility**: Full support for modern C++ features
-- ✅ **Zero-Cost Abstractions**: Minimal runtime overhead
-- ✅ **Comprehensive Testing**: Unit tests and integration tests included
+- **Core Difficulty Calculation**: Calculate MSD (MinaCalc Skill Difficulty) scores for rhythm game charts
+- **Multi-rate Support**: Get difficulty scores for music rates from 0.7x to 2.0x
+- **Pattern Analysis**: Analyze specific skillsets like stream, jumpstream, handstream, stamina, and more
+- **Thread-safe**: Multi-threaded calculator pool for high-performance applications
+- **osu! Integration**: Parse and analyze osu! beatmap files directly
+- **Utility Functions**: Helper functions for pattern analysis and difficulty comparison
+- **HashMap Conversion**: Easy conversion to HashMap format for flexible data handling
+
+## Prerequisites
+
+- **Rust**: Edition 2021 or later
+- **C++ Compiler**: C++17 compatible compiler (MSVC on Windows, GCC/Clang on Unix)
+- **Build Tools**: `cc` and `bindgen` (automatically handled by Cargo)
 
 ## Installation
 
-### Prerequisites
+Add this to your `Cargo.toml`:
 
-- **Rust**: 1.70+ (install via [rustup](https://rustup.rs/))
-- **C++ Compiler**: 
-  - Windows: MSVC (Visual Studio 2019+)
-  - Linux: GCC 7+ or Clang 6+
+```toml
+[dependencies]
+minacalc-rs = "0.2.1"
+```
 
-### Quick Start
+### Feature Flags
 
-```bash
-# Add to your Cargo.toml
-cargo add minacalc-rs
+The crate supports several optional features:
 
-# Or clone and build from source
-git clone https://github.com/your-username/minacalc-rs.git
-cd minacalc-rs
-cargo build --release
+```toml
+[dependencies]
+minacalc-rs = { version = "0.2.1", features = ["hashmap", "thread", "osu", "utils"] }
+```
+
+- **`hashmap`** (default): Provides HashMap conversion for MSD results
+- **`thread`**: Provides thread-safe calculator pool
+- **`osu`**: Provides osu! beatmap parsing and calculation
+- **`utils`**: Provides utility functions for pattern analysis
+
+## Quick Start
+
+### Basic Usage
+
+```rust
+use minacalc_rs::{Calc, Note};
+
+fn main() -> Result<(), Box<dyn std::error::Error>> {
+    // Create a calculator instance
+    let calc = Calc::new()?;
+    
+    // Define some notes (4K chart)
+    let notes = vec![
+        Note { notes: 1, row_time: 0.0 },    // Left column at 0s
+        Note { notes: 8, row_time: 1.0 },    // Right column at 1s
+        Note { notes: 15, row_time: 2.0 },   // All columns at 2s
+    ];
+    
+    // Calculate MSD scores for all rates
+    let msd_results = calc.calc_msd(&notes)?;
+    
+    // Access scores for specific rates
+    let overall_1x = msd_results.msds[3].overall;  // 1.0x rate
+    let stream_2x = msd_results.msds[13].stream;   // 2.0x rate
+    
+    println!("1.0x Overall: {:.2}", overall_1x);
+    println!("2.0x Stream: {:.2}", stream_2x);
+    
+    Ok(())
+}
+```
+
+### HashMap Conversion
+
+```rust
+use minacalc_rs::{Calc, Note, HashMapCalcExt};
+
+fn main() -> Result<(), Box<dyn std::error::Error>> {
+    let calc = Calc::new()?;
+    let notes = vec![
+        Note { notes: 1, row_time: 0.0 },
+        Note { notes: 8, row_time: 1.0 },
+    ];
+    
+    let msd_results = calc.calc_msd(&notes)?;
+    
+    // Convert to HashMap for easy access
+    let hashmap = msd_results.as_hashmap()?;
+    
+    // Access by rate string
+    if let Some(scores) = hashmap.get("1.0") {
+        println!("1.0x: Overall={:.2}, Stream={:.2}", 
+                 scores.overall, scores.stream);
+    }
+    
+    Ok(())
+}
+```
+
+### osu! Beatmap Analysis
+
+```rust
+use minacalc_rs::{Calc, OsuCalcExt};
+use std::path::PathBuf;
+
+fn main() -> Result<(), Box<dyn std::error::Error>> {
+    let calc = Calc::new()?;
+    
+    // Analyze an osu! beatmap file
+    let beatmap_path = PathBuf::from("path/to/beatmap.osu");
+    let msd_results = calc.calculate_msd_from_osu_file(beatmap_path)?;
+    
+    // Access scores for different rates
+    let rates = [0.7, 1.0, 1.5, 2.0];
+    let rate_indices = [0, 3, 8, 13];
+    
+    for (rate, &index) in rates.iter().zip(rate_indices.iter()) {
+        if index < msd_results.msds.len() {
+            let scores = msd_results.msds[index];
+            println!("{:.1}x: Overall={:.2}, Stream={:.2}, Tech={:.2}", 
+                     rate, scores.overall, scores.stream, scores.technical);
+        }
+    }
+    
+    Ok(())
+}
+```
+
+### Pattern Analysis with Utils
+
+```rust
+use minacalc_rs::{Calc, Note, utils::*};
+
+fn main() -> Result<(), Box<dyn std::error::Error>> {
+    let calc = Calc::new()?;
+    let notes = vec![
+        Note { notes: 1, row_time: 0.0 },
+        Note { notes: 8, row_time: 1.0 },
+    ];
+    
+    let msd_results = calc.calc_msd(&notes)?;
+    
+    // Get top 3 patterns for 1.0x rate
+    let top_patterns = calculate_highest_patterns(&msd_results.msds[3], 3);
+    println!("Top 3 patterns: {:?}", top_patterns);
+    
+    // Get all patterns ranked by difficulty
+    let all_patterns = calculate_highest_patterns(&msd_results.msds[3], 7);
+    println!("All patterns ranked: {:?}", all_patterns);
+    
+    Ok(())
+}
+```
+
+### Thread-safe Calculator Pool
+
+```rust
+use minacalc_rs::thread::{CalcPool, Note};
+
+fn main() -> Result<(), Box<dyn std::error::Error>> {
+    // Create a pool of calculators
+    let pool = CalcPool::new(4)?; // 4 calculator instances
+    
+    let notes = vec![
+        Note { notes: 1, row_time: 0.0 },
+        Note { notes: 8, row_time: 1.0 },
+    ];
+    
+    // Calculate MSD using the pool
+    let msd_results = pool.calc_msd(&notes)?;
+    
+    println!("Overall difficulty: {:.2}", msd_results.msds[3].overall);
+    
+    Ok(())
+}
 ```
 
 ## API Reference
 
 ### Core Types
 
-#### `Calc`
-Main calculator instance with automatic resource management.
+- **`Calc`**: Main calculator instance
+- **`Note`**: Represents a note in a rhythm game chart
+- **`AllRates`**: Contains MSD scores for all music rates (0.7x to 2.0x)
+- **`SkillsetScores`**: Individual skillset scores (stream, jumpstream, etc.)
 
-```rust
-impl Calc {
-    /// Creates a new calculator instance
-    pub fn new() -> Result<Self, &'static str>
-    
-    /// Gets the calculator version
-    pub fn version() -> i32
-    
-    /// Calculates MSD scores for all music rates (0.7x to 2.0x)
-    pub fn calc_msd(&self, notes: &[Note]) -> Result<MsdForAllRates, &'static str>
-    
-    /// Calculates SSR scores for specific rate and goal
-    pub fn calc_ssr(&self, notes: &[Note], music_rate: f32, score_goal: f32) -> Result<SkillsetScores, &'static str>
-}
-```
+### Skillsets
 
-#### `Note`
-Represents a single note row in the rhythm game.
+The calculator provides scores for these skillsets:
 
-```rust
-pub struct Note {
-    pub notes: u32,      // Number of notes at this time position
-    pub row_time: f32,   // Time position in seconds
-}
-```
+- **Overall**: General difficulty rating
+- **Stream**: Consecutive note patterns
+- **Jumpstream**: Jump patterns in streams
+- **Handstream**: Two-handed patterns
+- **Stamina**: Endurance requirements
+- **Jackspeed**: Jack pattern speed
+- **Chordjack**: Chord jack patterns
+- **Technical**: Technical complexity
 
-#### `SkillsetScores`
-Difficulty scores for different gameplay skills.
+### Music Rates
 
-```rust
-pub struct SkillsetScores {
-    pub overall: f32,     // Overall difficulty
-    pub stream: f32,      // Stream patterns
-    pub jumpstream: f32,  // Jumpstream patterns
-    pub handstream: f32,  // Handstream patterns
-    pub stamina: f32,     // Stamina requirements
-    pub jackspeed: f32,   // Jack speed
-    pub chordjack: f32,   // Chord jack patterns
-    pub technical: f32,   // Technical patterns
-}
-```
-
-#### `MsdForAllRates`
-MSD scores for all supported music rates.
-
-```rust
-pub struct MsdForAllRates {
-    pub msds: [SkillsetScores; 14], // 14 rates: 0.7x, 0.8x, ..., 2.0x
-}
-```
-
-### Error Handling
-
-All functions return `Result` with descriptive error messages:
-
-| Error Message | Description |
-|---------------|-------------|
-| `"Failed to create calculator"` | C++ library initialization failed |
-| `"No notes provided"` | Empty note array provided |
-| `"Music rate must be positive"` | Invalid music rate (≤ 0) |
-| `"Score goal must be between 0 and 100"` | Invalid score goal |
-
-## Project Structure
-
-```
-minacalc-rs/
-├── Cargo.toml              # Rust project configuration
-├── build.rs                # C++ compilation and bindgen setup
-├── API.h                   # C++ header file
-├── API.cpp                 # C++ implementation
-├── NoteDataStructures.h    # C++ data structures
-├── MinaCalc/               # Original MinaCalc C++ library
-├── src/
-│   ├── lib.rs              # Library entry point
-│   ├── bindings.rs         # Auto-generated FFI bindings
-│   └── wrapper.rs          # Idiomatic Rust interface
-├── examples/
-│   ├── basic_usage.rs      # Basic usage example
-│   └── osu.rs              # osu! integration example
-├── assets/
-│   └── test.osu            # Test beatmap file
-└── README.md               # This file
-```
-
-## Building from Source
-
-### Development Setup
-
-```bash
-# Clone repository
-git clone https://github.com/your-username/minacalc-rs.git
-cd minacalc-rs
-
-# Install dependencies
-cargo build
-
-# Run tests
-cargo test
-
-# Run examples
-cargo run --example basic_usage
-cargo run --example osu
-```
-
-### Cross-Platform Compilation
-
-The build system automatically detects your platform and uses appropriate compiler flags:
-
-- **Windows (MSVC)**: Uses `/std:c++17`
-- **Linux/macOS (GCC/Clang)**: Uses `-std=c++17`
-
-### Troubleshooting
-
-#### Common Issues
-
-1. **MSVC not found**: Install Visual Studio 2019+ with C++ workload
-2. **Bindgen errors**: Ensure you have `libclang` installed
-3. **C++17 not supported**: Update your compiler to a C++17-compatible version
-
-#### Platform-Specific Notes
-
-- **Windows**: Requires Visual Studio Build Tools or full Visual Studio
-- **Linux**: May need `libclang-dev` package: `sudo apt install libclang-dev`
-- **macOS**: Requires Xcode Command Line Tools: `xcode-select --install`
-
-## Testing
-
-```bash
-# Run all tests
-cargo test
-
-# Run tests with output
-cargo test -- --nocapture
-
-# Run specific test
-cargo test test_calc_version
-```
+Scores are calculated for 14 different music rates:
+- 0.7x, 0.8x, 0.9x, 1.0x, 1.1x, 1.2x, 1.3x, 1.4x, 1.5x, 1.6x, 1.7x, 1.8x, 1.9x, 2.0x
 
 ## Examples
 
-See the `examples/` directory for complete working examples:
+The crate includes several examples demonstrating different use cases:
 
-- `basic_usage.rs`: Simple MSD/SSR calculation
-- `osu.rs`: Integration with osu! beatmap parsing
+- **`basic_usage`**: Basic MSD calculation
+- **`osu`**: osu! beatmap analysis
+- **`utils_example`**: Pattern analysis utilities
+
+Run examples with:
+
+```bash
+# Basic usage
+cargo run --example basic_usage
+
+# osu! beatmap analysis (requires osu feature)
+cargo run --example osu --features="osu hashmap"
+
+# Utils example (requires utils feature)
+cargo run --example utils_example --features="utils"
+```
+
+## Error Handling
+
+The crate uses custom error types for different failure modes:
+
+- **`MinaCalcError`**: General calculation errors
+- **`OsuError`**: osu! beatmap parsing errors
+
+All functions return `Result<T, E>` for proper error handling.
+
+## Thread Safety
+
+The `Calc` type is not `Send` or `Sync` by default. For multi-threaded applications, use the `CalcPool` from the `thread` feature, which provides a thread-safe pool of calculator instances.
+
+## Performance
+
+- **Single-threaded**: Optimized for single-threaded applications
+- **Multi-threaded**: Use `CalcPool` for concurrent calculations
+- **Memory**: Efficient memory usage with minimal allocations
+- **Caching**: Calculator instances can be reused for multiple calculations
 
 ## Contributing
 
-We welcome contributions! Please see our [Contributing Guide](CONTRIBUTING.md) for details.
+Contributions are welcome! Please feel free to submit a Pull Request. For major changes, please open an issue first to discuss what you would like to change.
 
+## License
+
+This project is licensed under the MIT License - see the [LICENSE](LICENSE) file for details.
 
 ## Acknowledgments
 
-- Original MinaCalc library developers
-- Rust FFI and bindgen communities
-- Rhythm game community for feedback and testing
+- **MinaCalc**: The original C++ difficulty calculator
+- **Etterna**: The rhythm game that inspired this project
+- **Rust Community**: For the excellent tooling and ecosystem
 
 ## Changelog
 
-### v0.1.1
-- Fixed MSVC compilation issues
-- Improved cross-platform compatibility
-- Added comprehensive error handling
-- Translated documentation to English
+### v0.2.1
+- Added `utils` feature with pattern analysis functions
+
+### v0.2.0
+- Added `osu` feature for beatmap parsing
+- Added `thread` feature for thread-safe calculator pools
+- Improved HashMap conversion utilities
+- Enhanced documentation and examples
+- Improved type naming (`AllRates` instead of `MsdForAllRates`)
+- Enhanced error handling and documentation
+- Fixed namespace conflicts in bindings
 
 ### v0.1.0
-- Initial release
-- Basic MSD/SSR calculation support
-- Memory-safe Rust interface
-
-## Support
-
-- **Issues**: [GitHub Issues](https://github.com/your-username/minacalc-rs/issues)
-- **Discussions**: [GitHub Discussions](https://github.com/your-username/minacalc-rs/discussions)
-- **Documentation**: [docs.rs](https://docs.rs/minacalc-rs)
+- Initial release with basic MSD calculation
+- Core calculator functionality
+- Basic Rust bindings for MinaCalc
