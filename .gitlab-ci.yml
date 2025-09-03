@@ -2,7 +2,6 @@ stages:
   - setup
   - check
   - lint
-  - fmt
 
 variables:
   CARGO_HOME: "$CI_PROJECT_DIR/.cargo"
@@ -43,7 +42,7 @@ check:
     - rustup default stable
     - cargo check --all-targets
 
-lint:
+lint-test:
   stage: lint
   image: rust:latest
   tags:
@@ -55,8 +54,8 @@ lint:
     - rustup default stable
     - cargo clippy --all-targets --all-features -- -D warnings
 
-fmt:
-  stage: fmt
+fmt-test:
+  stage: lint
   image: rust:latest
   tags:
     - docker
