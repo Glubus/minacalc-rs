@@ -25,6 +25,9 @@ pub trait OsuCalcExt {
     /// Calculates MSD from osu! file path
     fn calculate_msd_from_osu_file(&self, path: PathBuf) -> MinaCalcResult<AllRates>;
     
+    /// Calculates MSD from osu! string
+    fn calculate_msd_from_string(&self, string: String) -> MinaCalcResult<AllRates>;
+    
     /// Validates a collection of notes
     fn validate_notes(notes: &[Note]) -> OsuResult<()>;
 }
@@ -149,6 +152,18 @@ impl OsuCalcExt for Calc {
 
         let msd = self.calc_msd(&notes)?;
 
+        Ok(msd)
+    }
+
+
+    fn calculate_msd_from_string(&self, string: String) -> MinaCalcResult<AllRates> {
+        let beatmap: Beatmap = rosu_map::from_str(&string)
+            .map_err(|e| OsuError::ParseFailed(format!("Failed to parse string: {}", e)))?;
+
+        Self::security_check(&beatmap)?;
+        let notes = Self::to_notes_merged(&beatmap)?;
+
+        let msd = self.calc_msd(&notes)?;
         Ok(msd)
     }
 }
