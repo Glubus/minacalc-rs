@@ -269,6 +269,7 @@ This project is licensed under the MIT License - see the [LICENSE](LICENSE) file
 ### v0.3.0
 - Removed deprecated `osu` feature (use `rox` instead for chart parsing)
 - Updated rhythm-open-exchange dependency
+- Updated MinaCalc to 515 version
 
 ### v0.2.1
 - Added `utils` feature with pattern analysis functions
