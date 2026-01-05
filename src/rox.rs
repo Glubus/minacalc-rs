@@ -19,12 +19,20 @@ pub trait RoxCalcExt {
         chart_rate: Option<f32>,
     ) -> MinaCalcResult<crate::wrapper::SkillsetScores>;
 
-    /// Calculates MSD for all rates (0.7x to 2.0x) from any supported rhythm game file
-    fn calculate_all_rates_from_file<P: AsRef<Path>>(
+    /// Calculates SSR (single rate) from a loaded ROX chart
+    fn calculate_ssr_from_rox_chart(
         &self,
-        path: P,
+        chart: &RoxChart,
+        music_rate: f32,
+        score_goal: f32,
         chart_rate: Option<f32>,
-    ) -> MinaCalcResult<AllRates>;
+    ) -> MinaCalcResult<crate::wrapper::SkillsetScores>;
+
+    /// Calculates MSD for all rates (0.7x to 2.0x) from any supported rhythm game file
+    fn calculate_all_rates_from_file<P: AsRef<Path>>(&self, path: P) -> MinaCalcResult<AllRates>;
+
+    /// Calculates MSD for all rates (0.7x to 2.0x) from a loaded ROX chart
+    fn calculate_all_rates_from_rox_chart(&self, chart: &RoxChart) -> MinaCalcResult<AllRates>;
 
     /// Validates a collection of notes
     fn validate_notes(notes: &[Note]) -> RoxResult<()>;
@@ -97,11 +105,26 @@ impl RoxCalcExt for Calc {
         let chart = auto_decode(path)
             .map_err(|e| RoxError::DecodeFailed(format!("Failed to decode {:?}: {}", path, e)))?;
 
+        self.calculate_ssr_from_rox_chart(&chart, music_rate, score_goal, chart_rate)
+    }
+
+    /// Calculates SSR (single rate) from a loaded ROX chart
+    fn calculate_ssr_from_rox_chart(
+        &self,
+        chart: &RoxChart,
+        music_rate: f32,
+        score_goal: f32,
+        chart_rate: Option<f32>,
+    ) -> MinaCalcResult<crate::wrapper::SkillsetScores> {
         // Convert chart to notes with rate
-        let notes = Self::chart_to_notes(&chart, chart_rate)?;
+        let notes = Self::chart_to_notes(chart, chart_rate)?;
 
         // Get keycount from chart (auto-detected)
         let keycount = chart.key_count as u32;
+
+        if keycount != 4 && keycount != 6 && keycount != 7 {
+            return Err(crate::error::MinaCalcError::UnsupportedKeyCount(keycount));
+        }
 
         // Calculate SSR with the detected keycount
         let ssr = self.calc_ssr_with_keycount(&notes, music_rate, score_goal, keycount)?;
@@ -110,22 +133,27 @@ impl RoxCalcExt for Calc {
     }
 
     /// Calculates MSD for all rates (0.7x to 2.0x) from any supported rhythm game file
-    fn calculate_all_rates_from_file<P: AsRef<Path>>(
-        &self,
-        path: P,
-        chart_rate: Option<f32>,
-    ) -> MinaCalcResult<AllRates> {
+    fn calculate_all_rates_from_file<P: AsRef<Path>>(&self, path: P) -> MinaCalcResult<AllRates> {
         let path = path.as_ref();
 
         // Auto-decode the file (supports .osu, .sm, .rox, etc.)
         let chart = auto_decode(path)
             .map_err(|e| RoxError::DecodeFailed(format!("Failed to decode {:?}: {}", path, e)))?;
 
+        self.calculate_all_rates_from_rox_chart(&chart)
+    }
+
+    /// Calculates MSD for all rates (0.7x to 2.0x) from a loaded ROX chart
+    fn calculate_all_rates_from_rox_chart(&self, chart: &RoxChart) -> MinaCalcResult<AllRates> {
         // Convert chart to notes with rate
-        let notes = Self::chart_to_notes(&chart, chart_rate)?;
+        let notes = Self::chart_to_notes(chart, None)?;
 
         // Get keycount from chart (auto-detected)
         let keycount = chart.key_count as u32;
+
+        if keycount != 4 && keycount != 6 && keycount != 7 {
+            return Err(crate::error::MinaCalcError::UnsupportedKeyCount(keycount));
+        }
 
         // Calculate MSD for all rates with the detected keycount
         let msd = self.calc_msd_with_keycount(&notes, keycount)?;
@@ -166,6 +194,10 @@ impl Calc {
             return Err(crate::error::MinaCalcError::NoNotesProvided);
         }
 
+        if keycount != 4 && keycount != 6 && keycount != 7 {
+            return Err(crate::error::MinaCalcError::UnsupportedKeyCount(keycount));
+        }
+
         // Validate all notes
         for note in notes {
             note.validate()?;
@@ -193,6 +225,10 @@ impl Calc {
     ) -> MinaCalcResult<crate::wrapper::SkillsetScores> {
         if notes.is_empty() {
             return Err(crate::error::MinaCalcError::NoNotesProvided);
+        }
+
+        if keycount != 4 && keycount != 6 && keycount != 7 {
+            return Err(crate::error::MinaCalcError::UnsupportedKeyCount(keycount));
         }
 
         if music_rate <= 0.0 {

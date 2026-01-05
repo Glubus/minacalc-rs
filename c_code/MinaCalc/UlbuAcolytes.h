@@ -234,7 +234,8 @@ fast_walk_and_check_for_skip(const std::vector<NoteInfo>& ni,
 		auto& nri = calc.adj_ni.at(itv).at(row_counter);
 
 		nri.row_notes = ri.notes;
-		nri.row_count = column_count(ri.notes);
+		// Use the same mask as hand_counts to exclude middle column for odd keycounts
+		nri.row_count = column_count(ri.notes & all_columns_without_middle);
 		nri.row_time = scaled_time;
 
 		// how many columns have a note on them per hand

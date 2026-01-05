@@ -51,6 +51,14 @@ fn main() {
     println!("cargo:rerun-if-changed=c_code/API.cpp");
     println!("cargo:rerun-if-changed=c_code/Models/NoteData/NoteDataStructures.h");
     println!("cargo:rerun-if-changed=c_code/MinaCalc/MinaCalc.cpp");
+    println!("cargo:rerun-if-changed=c_code/MinaCalc/MinaCalc.h");
+    println!("cargo:rerun-if-changed=c_code/MinaCalc/UlbuAcolytes.h");
+    println!("cargo:rerun-if-changed=c_code/MinaCalc/UlbuBase.h");
+    println!("cargo:rerun-if-changed=c_code/MinaCalc/UlbuSevenKey.h");
+    println!("cargo:rerun-if-changed=c_code/MinaCalc/UlbuSixKey.h");
+    println!("cargo:rerun-if-changed=c_code/MinaCalc/Ulbu.h");
+    println!("cargo:rerun-if-changed=c_code/MinaCalc/SequencingHelpers.h");
+    println!("cargo:rerun-if-changed=c_code/MinaCalc/Agnostic/IntervalInfo.h");
 
     // Définir des types conditionnels pour unsigned long
     // println!("cargo:rustc-cfg=target_os=\"{}\"", env::var("CARGO_CFG_TARGET_OS").unwrap());

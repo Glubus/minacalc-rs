@@ -4,7 +4,7 @@
 [![Documentation](https://docs.rs/minacalc-rs/badge.svg)](https://docs.rs/minacalc-rs)
 [![License: MIT](https://img.shields.io/badge/License-MIT-yellow.svg)](https://opensource.org/licenses/MIT)
 
-Safe and ergonomic Rust bindings for the MinaCalc rhythm game difficulty calculator. This crate provides high-level Rust APIs for calculating difficulty scores in rhythm games like StepMania, Etterna, and osu!.
+Safe and ergonomic Rust bindings for the MinaCalc rhythm game difficulty calculator. This crate provides high-level Rust APIs for calculating difficulty scores in rhythm games like StepMania and Etterna.
 
 ## Features
 
@@ -12,7 +12,7 @@ Safe and ergonomic Rust bindings for the MinaCalc rhythm game difficulty calcula
 - **Multi-rate Support**: Get difficulty scores for music rates from 0.7x to 2.0x
 - **Pattern Analysis**: Analyze specific skillsets like stream, jumpstream, handstream, stamina, and more
 - **Thread-safe**: Multi-threaded calculator pool for high-performance applications
-- **osu! Integration**: Parse and analyze osu! beatmap files directly
+- **ROX Integration**: Parse and analyze rhythm game chart files using the rhythm-open-exchange format
 - **Utility Functions**: Helper functions for pattern analysis and difficulty comparison
 - **HashMap Conversion**: Easy conversion to HashMap format for flexible data handling
 
@@ -28,7 +28,7 @@ Add this to your `Cargo.toml`:
 
 ```toml
 [dependencies]
-minacalc-rs = "0.2.1"
+minacalc-rs = "0.3.0"
 ```
 
 ### Feature Flags
@@ -37,12 +37,12 @@ The crate supports several optional features:
 
 ```toml
 [dependencies]
-minacalc-rs = { version = "0.2.1", features = ["hashmap", "thread", "osu", "utils"] }
+minacalc-rs = { version = "0.3.0", features = ["hashmap", "thread", "rox", "utils"] }
 ```
 
 - **`hashmap`** (default): Provides HashMap conversion for MSD results
 - **`thread`**: Provides thread-safe calculator pool
-- **`osu`**: Provides osu! beatmap parsing and calculation
+- **`rox`**: Provides chart parsing via rhythm-open-exchange (supports .sm, .osu, .rox formats)
 - **`utils`**: Provides utility functions for pattern analysis
 
 ## Quick Start
@@ -104,18 +104,18 @@ fn main() -> Result<(), Box<dyn std::error::Error>> {
 }
 ```
 
-### osu! Beatmap Analysis
+### Chart File Analysis with ROX
 
 ```rust
-use minacalc_rs::{Calc, OsuCalcExt};
+use minacalc_rs::{Calc, RoxCalcExt};
 use std::path::PathBuf;
 
 fn main() -> Result<(), Box<dyn std::error::Error>> {
     let calc = Calc::new()?;
     
-    // Analyze an osu! beatmap file
-    let beatmap_path = PathBuf::from("path/to/beatmap.osu");
-    let msd_results = calc.calculate_msd_from_osu_file(beatmap_path)?;
+    // Analyze a chart file (supports .sm, .osu, .rox formats)
+    let chart_path = PathBuf::from("path/to/chart.sm");
+    let msd_results = calc.calc_msd_from_rox_file(&chart_path, 1.0)?;
     
     // Access scores for different rates
     let rates = [0.7, 1.0, 1.5, 2.0];
@@ -214,7 +214,7 @@ Scores are calculated for 14 different music rates:
 The crate includes several examples demonstrating different use cases:
 
 - **`basic_usage`**: Basic MSD calculation
-- **`osu`**: osu! beatmap analysis
+- **`rox`**: Chart file analysis with ROX
 - **`utils_example`**: Pattern analysis utilities
 
 Run examples with:
@@ -223,8 +223,8 @@ Run examples with:
 # Basic usage
 cargo run --example basic_usage
 
-# osu! beatmap analysis (requires osu feature)
-cargo run --example osu --features="osu hashmap"
+# ROX chart analysis (requires rox feature)
+cargo run --example rox --features="rox hashmap"
 
 # Utils example (requires utils feature)
 cargo run --example utils_example --features="utils"
@@ -235,7 +235,7 @@ cargo run --example utils_example --features="utils"
 The crate uses custom error types for different failure modes:
 
 - **`MinaCalcError`**: General calculation errors
-- **`OsuError`**: osu! beatmap parsing errors
+- **`RoxError`**: Chart file parsing errors
 
 All functions return `Result<T, E>` for proper error handling.
 
@@ -266,11 +266,15 @@ This project is licensed under the MIT License - see the [LICENSE](LICENSE) file
 
 ## Changelog
 
+### v0.3.0
+- Removed deprecated `osu` feature (use `rox` instead for chart parsing)
+- Updated rhythm-open-exchange dependency
+
 ### v0.2.1
 - Added `utils` feature with pattern analysis functions
 
 ### v0.2.0
-- Added `osu` feature for beatmap parsing
+- Added `rox` feature for universal chart parsing
 - Added `thread` feature for thread-safe calculator pools
 - Improved HashMap conversion utilities
 - Enhanced documentation and examples

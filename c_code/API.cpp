@@ -1,4 +1,5 @@
 #include "MinaCalc/MinaCalc.h"
+#include <vector>
 
 extern "C" {
 	#include "API.h"

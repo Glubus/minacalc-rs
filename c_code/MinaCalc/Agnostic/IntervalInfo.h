@@ -50,6 +50,10 @@ struct ItvInfo
 
 	void update_tap_counts(const int& row_count)
 	{
+		if (row_count == 0) {
+			return;
+		}
+
 		total_taps += row_count;
 
 		// ALWAYS COUNT NUMBER OF TAPS IN CHORDS

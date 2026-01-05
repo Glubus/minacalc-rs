@@ -21,11 +21,6 @@ impl Note {
                 "Note must have at least one column".to_string(),
             ));
         }
-        if self.notes > 0b1111 {
-            return Err(MinaCalcError::InvalidNoteData(
-                "Note bitflags exceed 4K limit".to_string(),
-            ));
-        }
         if self.row_time < 0.0 {
             return Err(MinaCalcError::InvalidNoteData(
                 "Row time cannot be negative".to_string(),
@@ -89,6 +84,16 @@ impl SkillsetScores {
             }
         }
         Ok(())
+    }
+
+    /// Alias for `jumpstream` (used for 6K/7K charts)
+    pub fn chordstream(&self) -> f32 {
+        self.jumpstream
+    }
+
+    /// Alias for `handstream` (used for 6K/7K charts)
+    pub fn bracketing(&self) -> f32 {
+        self.handstream
     }
 }
 
