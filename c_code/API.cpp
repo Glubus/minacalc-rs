@@ -1,4 +1,5 @@
 #include "MinaCalc/MinaCalc.h"
+#include <vector>
 
 extern "C" {
 	#include "API.h"
@@ -33,11 +34,12 @@ extern "C" {
 
 
 
-	MsdForAllRates calc_msd(CalcHandle *calc, const NoteInfo *rows, size_t num_rows) {
+	MsdForAllRates calc_msd(CalcHandle *calc, const NoteInfo *rows, size_t num_rows, unsigned int keycount) {
 		std::vector<NoteInfo> note_info(rows, rows + num_rows);
 
 		auto msd_vectors = MinaSDCalc(
 			note_info,
+			keycount,
 			reinterpret_cast<Calc*>(calc)
 		);
 
@@ -51,13 +53,14 @@ extern "C" {
 
 
 
-	Ssr calc_ssr(CalcHandle *calc, NoteInfo *rows, size_t num_rows, float music_rate, float score_goal) {
+	Ssr calc_ssr(CalcHandle *calc, NoteInfo *rows, size_t num_rows, float music_rate, float score_goal, unsigned int keycount) {
 		std::vector<NoteInfo> note_info(rows, rows + num_rows);
 
 		auto skillsets = MinaSDCalc(
 			note_info,
 			music_rate,
 			score_goal,
+			keycount,
 			reinterpret_cast<Calc*>(calc)
 		);
 

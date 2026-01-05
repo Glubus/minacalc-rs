@@ -1,5 +1,5 @@
 // This is a C++ style header file, so we have to do the typedef below to have NoteInfo accessible
-#include "NoteDataStructures.h"
+#include "Models/NoteData/NoteDataStructures.h"
 #include <stddef.h>
 
 typedef struct NoteInfo NoteInfo;
@@ -30,6 +30,6 @@ CalcHandle *create_calc();
 
 void destroy_calc(CalcHandle *calc);
 
-MsdForAllRates calc_msd(CalcHandle *calc, const NoteInfo *rows, size_t num_rows);
+MsdForAllRates calc_msd(CalcHandle *calc, const NoteInfo *rows, size_t num_rows, unsigned int keycount);
 
-Ssr calc_ssr(CalcHandle *calc, NoteInfo *rows, size_t num_rows, float music_rate, float score_goal);
+Ssr calc_ssr(CalcHandle *calc, NoteInfo *rows, size_t num_rows, float music_rate, float score_goal, unsigned int keycount);
