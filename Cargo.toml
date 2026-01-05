@@ -17,13 +17,13 @@ crate-type = ["cdylib", "rlib"]
 default = ["hashmap"]
 thread = ["dep:parking_lot", "dep:once_cell"]
 hashmap = []
-osu = ["dep:rosu-map"]
+rox = []
 utils = []
 
 [dependencies]
 parking_lot = { version = "0.12", optional = true }
 once_cell = { version = "1.19", optional = true }
-rosu-map = { version = "0.2", optional = true }
+rhythm-open-exchange = "0.2.2"
 
 [build-dependencies]
 cc = "1.0"
@@ -36,9 +36,9 @@ name = "basic_usage"
 path = "examples/basic_usage.rs"
 
 [[example]]
-name = "osu"
-path = "examples/osu.rs"
-required-features = ["osu", "hashmap"]
+name = "rox"
+path = "examples/rox.rs"
+required-features = ["rox", "hashmap"]
 
 [[example]]
 name = "utils_example"

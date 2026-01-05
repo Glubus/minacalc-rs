@@ -187,7 +187,7 @@ impl From<BindingsMsdForAllRates> for AllRates {
 /// Main handler for difficulty calculations
 #[derive(Clone)]
 pub struct Calc {
-    handle: *mut CalcHandle,
+    pub(crate) handle: *mut CalcHandle,
 }
 
 impl Calc {

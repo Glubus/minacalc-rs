@@ -1,0 +1,194 @@
+use rhythm_open_exchange::{codec::auto_decode, RoxChart};
+use std::collections::HashMap;
+use std::path::Path;
+
+use crate::error::{MinaCalcResult, RoxError, RoxResult};
+use crate::{wrapper::AllRates, Calc, Note};
+
+/// Extension trait for Calc to handle universal rhythm game chart operations
+pub trait RoxCalcExt {
+    /// Converts ROX chart to MinaCalc notes with optional rate
+    fn chart_to_notes(chart: &RoxChart, rate: Option<f32>) -> RoxResult<Vec<Note>>;
+
+    /// Calculates MSD from any supported rhythm game file
+    fn calculate_msd_from_file<P: AsRef<Path>>(
+        &self,
+        path: P,
+        rate: Option<f32>,
+    ) -> MinaCalcResult<AllRates>;
+
+    /// Validates a collection of notes
+    fn validate_notes(notes: &[Note]) -> RoxResult<()>;
+}
+
+impl RoxCalcExt for Calc {
+    /// Converts ROX chart to MinaCalc notes with optional rate
+    fn chart_to_notes(chart: &RoxChart, rate: Option<f32>) -> RoxResult<Vec<Note>> {
+        let rate = rate.unwrap_or(1.0);
+
+        if rate <= 0.0 {
+            return Err(RoxError::InvalidRate(rate));
+        }
+
+        // Use HashMap to merge notes at the same time
+        let mut time_notes: HashMap<u64, u32> = HashMap::new();
+
+        // Convert ROX notes to MinaCalc format
+        for note in &chart.notes {
+            // ROX uses microseconds, convert to seconds then apply rate
+            let time_seconds = (note.time_us as f64 / 1_000_000.0) / rate as f64;
+
+            // Convert back to microseconds for HashMap key (to preserve precision)
+            let time_key = (time_seconds * 1_000_000.0) as u64;
+
+            // Get column index and convert to bitflag
+            // Column 0 = 0b0001, Column 1 = 0b0010, Column 2 = 0b0100, Column 3 = 0b1000
+            let column_bitflag = 1u32 << note.column;
+
+            // Merge bitflags for notes at the same time using OR operation
+            time_notes
+                .entry(time_key)
+                .and_modify(|existing_notes| *existing_notes |= column_bitflag)
+                .or_insert(column_bitflag);
+        }
+
+        if time_notes.is_empty() {
+            return Err(RoxError::NoNotes);
+        }
+
+        // Convert HashMap back to sorted Vec<Note>
+        let mut notes: Vec<Note> = time_notes
+            .into_iter()
+            .map(|(time_key, notes)| Note {
+                notes,
+                row_time: (time_key as f64 / 1_000_000.0) as f32,
+            })
+            .collect();
+
+        // Sort by time
+        notes.sort_by(|a, b| a.row_time.partial_cmp(&b.row_time).unwrap());
+
+        // Validate all notes
+        Self::validate_notes(&notes)?;
+
+        Ok(notes)
+    }
+
+    /// Calculates MSD from any supported rhythm game file
+    fn calculate_msd_from_file<P: AsRef<Path>>(
+        &self,
+        path: P,
+        rate: Option<f32>,
+    ) -> MinaCalcResult<AllRates> {
+        let path = path.as_ref();
+
+        // Auto-decode the file (supports .osu, .sm, .rox, etc.)
+        let chart = auto_decode(path)
+            .map_err(|e| RoxError::DecodeFailed(format!("Failed to decode {:?}: {}", path, e)))?;
+
+        // Convert chart to notes with rate
+        let notes = Self::chart_to_notes(&chart, rate)?;
+
+        // Get keycount from chart (auto-detected)
+        let keycount = chart.key_count as u32;
+
+        // Calculate MSD with the detected keycount
+        let msd = self.calc_msd_with_keycount(&notes, keycount)?;
+
+        Ok(msd)
+    }
+
+    fn validate_notes(notes: &[Note]) -> RoxResult<()> {
+        if notes.is_empty() {
+            return Err(RoxError::NoNotes);
+        }
+
+        for (i, note) in notes.iter().enumerate() {
+            if note.notes == 0 {
+                return Err(RoxError::InvalidNote(format!("Note {} has no columns", i)));
+            }
+            if note.row_time < 0.0 {
+                return Err(RoxError::InvalidNote(format!(
+                    "Note {} has negative time",
+                    i
+                )));
+            }
+        }
+
+        Ok(())
+    }
+}
+
+// Helper extension for Calc to support keycount parameter
+impl Calc {
+    /// Calculates MSD with configurable keycount
+    pub fn calc_msd_with_keycount(
+        &self,
+        notes: &[Note],
+        keycount: u32,
+    ) -> MinaCalcResult<crate::wrapper::AllRates> {
+        if notes.is_empty() {
+            return Err(crate::error::MinaCalcError::NoNotesProvided);
+        }
+
+        // Validate all notes
+        for note in notes {
+            note.validate()?;
+        }
+
+        // Convert notes to C format
+        let note_infos: Vec<crate::NoteInfo> = notes.iter().map(|&note| note.into()).collect();
+
+        let result = unsafe {
+            crate::calc_msd(self.handle, note_infos.as_ptr(), note_infos.len(), keycount)
+        };
+
+        let msd: crate::wrapper::AllRates = result.into();
+        msd.validate()?;
+        Ok(msd)
+    }
+
+    /// Calculates SSR with configurable keycount
+    pub fn calc_ssr_with_keycount(
+        &self,
+        notes: &[Note],
+        music_rate: f32,
+        score_goal: f32,
+        keycount: u32,
+    ) -> MinaCalcResult<crate::wrapper::SkillsetScores> {
+        if notes.is_empty() {
+            return Err(crate::error::MinaCalcError::NoNotesProvided);
+        }
+
+        if music_rate <= 0.0 {
+            return Err(crate::error::MinaCalcError::InvalidMusicRate(music_rate));
+        }
+
+        if score_goal <= 0.0 || score_goal > 100.0 {
+            return Err(crate::error::MinaCalcError::InvalidScoreGoal(score_goal));
+        }
+
+        // Validate all notes
+        for note in notes {
+            note.validate()?;
+        }
+
+        // Convert notes to C format
+        let mut note_infos: Vec<crate::NoteInfo> = notes.iter().map(|&note| note.into()).collect();
+
+        let result = unsafe {
+            crate::calc_ssr(
+                self.handle,
+                note_infos.as_mut_ptr(),
+                note_infos.len(),
+                music_rate,
+                score_goal,
+                keycount,
+            )
+        };
+
+        let scores: crate::wrapper::SkillsetScores = result.into();
+        scores.validate()?;
+        Ok(scores)
+    }
+}
