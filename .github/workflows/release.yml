@@ -121,3 +121,25 @@ jobs:
           override: true
       - name: Publish to Crates.io
         run: cargo publish --token ${{ secrets.CARGO_REGISTRY_TOKEN }}
+
+  publish-nuget:
+    name: Publish NuGet
+    runs-on: windows-latest
+    if: "startsWith(github.ref, 'refs/tags/')"
+    steps:
+      - uses: actions/checkout@v3
+      - uses: actions-rs/toolchain@v1
+        with:
+          toolchain: stable
+          target: x86_64-pc-windows-msvc
+          override: true
+      - name: Build Rust Library
+        run: cargo build --release --features api
+      - name: Setup .NET
+        uses: actions/setup-dotnet@v3
+        with:
+          dotnet-version: '8.0.x'
+      - name: Pack C# Project
+        run: dotnet pack bindings/csharp/MinaCalc.csproj --configuration Release --output nuget_dist
+      - name: Publish to NuGet
+        run: dotnet nuget push nuget_dist/*.nupkg --api-key ${{ secrets.NUGET_API_KEY }} --source https://api.nuget.org/v3/index.json
