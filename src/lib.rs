@@ -31,6 +31,9 @@ pub mod rox;
 #[cfg(feature = "utils")]
 pub mod utils;
 
+#[cfg(feature = "api")]
+pub mod api;
+
 // Re-export feature-gated modules
 #[cfg(feature = "hashmap")]
 pub use hashmap::*;

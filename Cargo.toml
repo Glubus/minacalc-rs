@@ -19,11 +19,12 @@ thread = ["dep:parking_lot", "dep:once_cell"]
 hashmap = []
 rox = []
 utils = []
+api = ["rox"]
 
 [dependencies]
 parking_lot = { version = "0.12", optional = true }
 once_cell = { version = "1.19", optional = true }
-rhythm-open-exchange = "0.2.2"
+rhythm-open-exchange = "0.3.3"
 
 [build-dependencies]
 cc = "1.0"
