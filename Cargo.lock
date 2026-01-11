@@ -290,7 +290,7 @@ checksum = "32a282da65faaf38286cf3be983213fcf1d2e2a58700e808f83f4ea9a4804bc0"
 
 [[package]]
 name = "minacalc-rs"
-version = "0.3.0"
+version = "0.3.1"
 dependencies = [
  "bindgen",
  "cc",
@@ -462,9 +462,9 @@ checksum = "2b15c43186be67a4fd63bee50d0303afffcef381492ebe2c5d87f324e1b8815c"
 
 [[package]]
 name = "rhythm-open-exchange"
-version = "0.2.2"
+version = "0.3.3"
 source = "registry+https://github.com/rust-lang/crates.io-index"
-checksum = "d5caac707903698abdea31cd491f8ec3665153aadbf1184b9212e750e467c96a"
+checksum = "a84cd4f16fa97c73b50ac208fd04aecd0c62a2e8d08e37098ce289cf0c7b9439"
 dependencies = [
  "bincode",
  "bitflags",

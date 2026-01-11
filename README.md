@@ -28,7 +28,7 @@ Add this to your `Cargo.toml`:
 
 ```toml
 [dependencies]
-minacalc-rs = "0.3.0"
+minacalc-rs = "0.3.1"
 ```
 
 ### Feature Flags
@@ -265,6 +265,12 @@ This project is licensed under the MIT License - see the [LICENSE](LICENSE) file
 - **Rust Community**: For the excellent tooling and ecosystem
 
 ## Changelog
+
+### v0.3.1
+- Added C# bindings (`bindings/csharp`)
+- Added Python bindings (`bindings/python`)
+- Added `api` feature for FFI exports (file path and string content support)
+- Added GitHub Actions release workflow (PyPI, Crates.io, NuGet)
 
 ### v0.3.0
 - Removed deprecated `osu` feature (use `rox` instead for chart parsing)

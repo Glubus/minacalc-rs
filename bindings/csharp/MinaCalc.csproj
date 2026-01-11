@@ -1,0 +1,26 @@
+<Project Sdk="Microsoft.NET.Sdk">
+
+  <PropertyGroup>
+    <TargetFramework>net8.0</TargetFramework>
+    <ImplicitUsings>enable</ImplicitUsings>
+    <Nullable>enable</Nullable>
+    <AllowUnsafeBlocks>true</AllowUnsafeBlocks>
+    <Platforms>x64</Platforms>
+    <Authors>Glubus</Authors>
+    <Description>C# bindings for MinaCalc, a rhythm game difficulty calculator.</Description>
+    <PackageId>MinaCalc</PackageId>
+    <Version>0.3.1</Version>
+    <PackageTags>rhythm-game;difficulty-calculator;native;rust;minacalc</PackageTags>
+    <PackageLicenseExpression>MIT</PackageLicenseExpression>
+    <RepositoryUrl>https://github.com/Glubus/minacalc-rs</RepositoryUrl>
+  </PropertyGroup>
+
+  <ItemGroup>
+    <Content Include="..\..\target\release\minacalc_rs.dll" Condition="Exists('..\..\target\release\minacalc_rs.dll')">
+      <PackagePath>runtimes/win-x64/native/minacalc_rs.dll</PackagePath>
+      <Pack>true</Pack>
+      <CopyToOutputDirectory>PreserveNewest</CopyToOutputDirectory>
+    </Content>
+  </ItemGroup>
+
+</Project>

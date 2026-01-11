@@ -19,6 +19,16 @@ pub trait RoxCalcExt {
         chart_rate: Option<f32>,
     ) -> MinaCalcResult<crate::wrapper::SkillsetScores>;
 
+    /// Calculates SSR (single rate) from string content (e.g., .osu, .sm)
+    fn calculate_ssr_from_string(
+        &self,
+        content: &str,
+        file_extension: &str,
+        music_rate: f32,
+        score_goal: f32,
+        chart_rate: Option<f32>,
+    ) -> MinaCalcResult<crate::wrapper::SkillsetScores>;
+
     /// Calculates SSR (single rate) from a loaded ROX chart
     fn calculate_ssr_from_rox_chart(
         &self,
@@ -30,6 +40,13 @@ pub trait RoxCalcExt {
 
     /// Calculates MSD for all rates (0.7x to 2.0x) from any supported rhythm game file
     fn calculate_all_rates_from_file<P: AsRef<Path>>(&self, path: P) -> MinaCalcResult<AllRates>;
+
+    /// Calculates MSD for all rates (0.7x to 2.0x) from string content
+    fn calculate_all_rates_from_string(
+        &self,
+        content: &str,
+        file_extension: &str,
+    ) -> MinaCalcResult<AllRates>;
 
     /// Calculates MSD for all rates (0.7x to 2.0x) from a loaded ROX chart
     fn calculate_all_rates_from_rox_chart(&self, chart: &RoxChart) -> MinaCalcResult<AllRates>;
@@ -108,6 +125,24 @@ impl RoxCalcExt for Calc {
         self.calculate_ssr_from_rox_chart(&chart, music_rate, score_goal, chart_rate)
     }
 
+    /// Calculates SSR (single rate) from string content (e.g., .osu, .sm)
+    fn calculate_ssr_from_string(
+        &self,
+        content: &str,
+        _file_extension: &str,
+        music_rate: f32,
+        score_goal: f32,
+        chart_rate: Option<f32>,
+    ) -> MinaCalcResult<crate::wrapper::SkillsetScores> {
+        use rhythm_open_exchange::codec::from_string;
+
+        // Decode from string (auto-detects format)
+        let chart = from_string(content)
+            .map_err(|e| RoxError::DecodeFailed(format!("Failed to decode from string: {}", e)))?;
+
+        self.calculate_ssr_from_rox_chart(&chart, music_rate, score_goal, chart_rate)
+    }
+
     /// Calculates SSR (single rate) from a loaded ROX chart
     fn calculate_ssr_from_rox_chart(
         &self,
@@ -120,7 +155,7 @@ impl RoxCalcExt for Calc {
         let notes = Self::chart_to_notes(chart, chart_rate)?;
 
         // Get keycount from chart (auto-detected)
-        let keycount = chart.key_count as u32;
+        let keycount = chart.key_count() as u32;
 
         if keycount != 4 && keycount != 6 && keycount != 7 {
             return Err(crate::error::MinaCalcError::UnsupportedKeyCount(keycount));
@@ -143,13 +178,28 @@ impl RoxCalcExt for Calc {
         self.calculate_all_rates_from_rox_chart(&chart)
     }
 
+    /// Calculates MSD for all rates (0.7x to 2.0x) from string content
+    fn calculate_all_rates_from_string(
+        &self,
+        content: &str,
+        _file_extension: &str,
+    ) -> MinaCalcResult<AllRates> {
+        use rhythm_open_exchange::codec::from_string;
+
+        // Decode from string (auto-detects format)
+        let chart = from_string(content)
+            .map_err(|e| RoxError::DecodeFailed(format!("Failed to decode from string: {}", e)))?;
+
+        self.calculate_all_rates_from_rox_chart(&chart)
+    }
+
     /// Calculates MSD for all rates (0.7x to 2.0x) from a loaded ROX chart
     fn calculate_all_rates_from_rox_chart(&self, chart: &RoxChart) -> MinaCalcResult<AllRates> {
         // Convert chart to notes with rate
         let notes = Self::chart_to_notes(chart, None)?;
 
         // Get keycount from chart (auto-detected)
-        let keycount = chart.key_count as u32;
+        let keycount = chart.key_count() as u32;
 
         if keycount != 4 && keycount != 6 && keycount != 7 {
             return Err(crate::error::MinaCalcError::UnsupportedKeyCount(keycount));
