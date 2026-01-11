@@ -28,7 +28,7 @@ Add this to your `Cargo.toml`:
 
 ```toml
 [dependencies]
-minacalc-rs = "0.3.2"
+minacalc-rs = "0.3.3"
 ```
 
 ### Feature Flags
