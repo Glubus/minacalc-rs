@@ -1,18 +1,18 @@
-use crate::{Ssr, wrapper::SkillsetScores};
+use crate::{wrapper::SkillsetScores, Ssr};
 
 /// Calculates the highest rated patterns from skillset scores
-/// 
+///
 /// # Arguments
 /// * `skillset` - The skillset scores to analyze
 /// * `number` - The number of top patterns to return
-/// 
+///
 /// # Returns
 /// A vector of pattern names sorted by rating (highest first)
-/// 
+///
 /// # Example
 /// ```
 /// use minacalc_rs::{SkillsetScores, utils::calculate_highest_patterns};
-/// 
+///
 /// let skillset = SkillsetScores {
 ///     overall: 10.0,
 ///     stream: 8.0,
@@ -23,7 +23,7 @@ use crate::{Ssr, wrapper::SkillsetScores};
 ///     chordjack: 1.0,
 ///     technical: 3.0,
 /// };
-/// 
+///
 /// let top_patterns = calculate_highest_patterns(&skillset, 3);
 /// // Returns: ["jumpstream", "stream", "handstream"]
 /// ```
@@ -53,11 +53,11 @@ pub fn calculate_highest_patterns(skillset: &SkillsetScores, number: i8) -> Vec<
 }
 
 /// Calculates the highest rated patterns from Ssr scores (converts to SkillsetScores first)
-/// 
+///
 /// # Arguments
 /// * `ssr` - The Ssr scores to analyze
 /// * `number` - The number of top patterns to return
-/// 
+///
 /// # Returns
 /// A vector of pattern names sorted by rating (highest first)
 pub fn calculate_highest_patterns_from_ssr(ssr: &Ssr, number: i8) -> Vec<String> {
