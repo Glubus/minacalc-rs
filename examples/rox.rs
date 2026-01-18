@@ -9,7 +9,7 @@ fn main() -> Result<(), Box<dyn std::error::Error>> {
 
     // Test 4K, 6K, and 7K charts
     let charts = [
-        ("assets/4K.osu", "4K"),
+        ("assets/test.osu", "4K"),
         ("assets/6K.osu", "6K"),
         ("assets/7K.osu", "7K"),
     ];

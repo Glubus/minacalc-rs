@@ -28,7 +28,7 @@ Add this to your `Cargo.toml`:
 
 ```toml
 [dependencies]
-minacalc-rs = "0.3.3"
+minacalc-rs = "0.3.5"
 ```
 
 ### Feature Flags
@@ -37,7 +37,7 @@ The crate supports several optional features:
 
 ```toml
 [dependencies]
-minacalc-rs = { version = "0.3.0", features = ["hashmap", "thread", "rox", "utils"] }
+minacalc-rs = { version = "0.3.5", features = ["hashmap", "thread", "rox", "utils"] }
 ```
 
 - **`hashmap`** (default): Provides HashMap conversion for MSD results
@@ -265,6 +265,10 @@ This project is licensed under the MIT License - see the [LICENSE](LICENSE) file
 - **Rust Community**: For the excellent tooling and ecosystem
 
 ## Changelog
+
+### v0.3.5
+- Fixed score_goal parameter (now uses 0.93 instead of 93.0)
+- Synchronized all binding versions
 
 ### v0.3.1
 - Added C# bindings (`bindings/csharp`)
