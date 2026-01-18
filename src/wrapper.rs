@@ -1,8 +1,6 @@
 use crate::error::{MinaCalcError, MinaCalcResult};
-use crate::{
-    calc_all_rates, calc_at_rate, calc_version, create_calc, destroy_calc, CalcHandle,
-    MsdForAllRates, NoteInfo, Ssr,
-};
+use crate::{CalcHandle, MsdForAllRates, NoteInfo, Ssr};
+use log::debug;
 
 /// Represents a note in the rhythm game
 #[derive(Debug, Clone, Copy)]
@@ -76,7 +74,7 @@ impl SkillsetScores {
         ];
 
         for score in scores {
-            if score < 0.0 || score > 1000.0 {
+            if !(0.0..=1000.0).contains(&score) {
                 return Err(MinaCalcError::InvalidNoteData(format!(
                     "Score {} is out of reasonable bounds",
                     score
@@ -198,22 +196,31 @@ pub struct Calc {
 impl Calc {
     /// Creates a new calculator instance
     pub fn new() -> MinaCalcResult<Self> {
-        let handle = unsafe { create_calc() };
+        debug!("Creating new Calc instance");
+        let handle = unsafe { crate::create_calc() };
         if handle.is_null() {
+            debug!("Failed to create Calc instance: handle is null");
             return Err(MinaCalcError::CalculatorCreationFailed);
         }
-        Ok(Calc { handle })
+        debug!("Calc instance created successfully");
+        Ok(Self { handle })
     }
 
     /// Gets the calculator version
     pub fn version() -> i32 {
-        unsafe { calc_version() }
+        unsafe { crate::calc_version() }
     }
 
     /// Calculates scores for all music rates (Optimized batch calculation)
-    /// capped: true for SSR (rated), false for MSD (uncapped)
+    /// capped: true for    /// Calculates MSD scores for all music rates (Uncapped)
     pub fn calc_all_rates(&self, notes: &[Note], capped: bool) -> MinaCalcResult<AllRates> {
+        debug!(
+            "calc_all_rates called with {} notes, capped: {}",
+            notes.len(),
+            capped
+        );
         if notes.is_empty() {
+            debug!("calc_all_rates: No notes provided");
             return Err(MinaCalcError::NoNotesProvided);
         }
 
@@ -223,22 +230,24 @@ impl Calc {
         }
 
         // Convert notes to C format
-        let note_infos: Vec<NoteInfo> = notes.iter().map(|&note| note.into()).collect();
+        let mut note_infos: Vec<NoteInfo> = notes.iter().map(|&note| note.into()).collect();
         let cap_int = if capped { 1 } else { 0 };
 
-        // Hardcoded keycount 4 for legacy wrapper consistency
+        debug!("Calling FFI calc_all_rates with cap_int: {}", cap_int);
         let result = unsafe {
             crate::calc_all_rates(
                 self.handle,
-                note_infos.as_ptr(),
+                note_infos.as_mut_ptr(),
                 note_infos.len(),
                 4,
                 cap_int,
             )
         };
+        debug!("FFI calc_all_rates returned");
 
         let msd: AllRates = result.into();
         msd.validate()?;
+        debug!("calc_all_rates success");
         Ok(msd)
     }
 
@@ -251,16 +260,26 @@ impl Calc {
         score_goal: f32,
         capped: bool,
     ) -> MinaCalcResult<SkillsetScores> {
+        debug!(
+            "calc_at_rate called with {} notes, rate: {}, goal: {}, capped: {}",
+            notes.len(),
+            music_rate,
+            score_goal,
+            capped
+        );
         if notes.is_empty() {
+            debug!("calc_at_rate: No notes provided");
             return Err(MinaCalcError::NoNotesProvided);
         }
 
         if music_rate <= 0.0 {
+            debug!("calc_at_rate: Invalid music rate {}", music_rate);
             return Err(MinaCalcError::InvalidMusicRate(music_rate));
         }
 
         // Validating score goal only makes sense if capped or if we want to be strict
         if score_goal <= 0.0 || score_goal > 1.0 {
+            debug!("calc_at_rate: Invalid score goal {}", score_goal);
             return Err(MinaCalcError::InvalidScoreGoal(score_goal));
         }
 
@@ -273,6 +292,7 @@ impl Calc {
         let mut note_infos: Vec<NoteInfo> = notes.iter().map(|&note| note.into()).collect();
         let cap_int = if capped { 1 } else { 0 };
 
+        debug!("Calling FFI calc_at_rate with cap_int: {}", cap_int);
         let result = unsafe {
             crate::calc_at_rate(
                 self.handle,
@@ -284,9 +304,11 @@ impl Calc {
                 cap_int,
             )
         };
+        debug!("FFI calc_at_rate returned");
 
         let scores: SkillsetScores = result.into();
         scores.validate()?;
+        debug!("calc_at_rate success");
         Ok(scores)
     }
 
@@ -300,7 +322,7 @@ impl Drop for Calc {
     fn drop(&mut self) {
         if !self.handle.is_null() {
             unsafe {
-                destroy_calc(self.handle);
+                crate::destroy_calc(self.handle);
             }
         }
     }

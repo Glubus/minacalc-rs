@@ -90,7 +90,7 @@ impl ThreadSafeCalcPool {
         loop {
             match self.get_calc() {
                 Ok(calc) => return Ok(calc),
-                Err(e) => {
+                Err(_e) => {
                     if start.elapsed() >= timeout {
                         return Err(MinaCalcError::InternalError(format!(
                             "Timeout waiting for calculator: {}ms",

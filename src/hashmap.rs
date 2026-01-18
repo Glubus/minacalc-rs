@@ -57,7 +57,7 @@ impl HashMapCalcExt for AllRates {
 
         let mut map = HashMap::new();
         for &rate in rates {
-            if rate < 0.7 || rate > 2.0 {
+            if !(0.7..=2.0).contains(&rate) {
                 return Err(MinaCalcError::InvalidNoteData(format!(
                     "Rate {} is out of valid range [0.7, 2.0]",
                     rate
@@ -80,7 +80,7 @@ impl HashMapCalcExt for AllRates {
 
     /// Gets scores for a specific rate
     fn get_rate_scores(&self, rate: f32) -> MinaCalcResult<Ssr> {
-        if rate < 0.7 || rate > 2.0 {
+        if !(0.7..=2.0).contains(&rate) {
             return Err(MinaCalcError::InvalidNoteData(format!(
                 "Rate {} is out of valid range [0.7, 2.0]",
                 rate

@@ -1,6 +1,7 @@
-use crate::error::MinaCalcError;
+#![allow(clippy::not_unsafe_ptr_arg_deref)]
+
 use crate::rox::RoxCalcExt;
-use crate::wrapper::{AllRates, Calc, Note, SkillsetScores};
+use crate::wrapper::{Calc, Note, SkillsetScores};
 use std::ffi::CStr;
 use std::os::raw::c_char;
 use std::slice;

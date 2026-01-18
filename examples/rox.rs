@@ -25,7 +25,7 @@ fn main() -> Result<(), Box<dyn std::error::Error>> {
             // Single Rate SSR Calculation
             println!("--- Single Rate SSR (1.0x @ 93%) ---");
             // Direct call, propagating error if any
-            let ssr = calc.calculate_ssr_from_file(&chart_path, 1.0, 0.93, None)?;
+            let ssr = calc.calculate_at_rate_from_file(&chart_path, 1.0, 0.93, None, true)?;
 
             println!("✅ SSR calculated!");
             println!(
@@ -49,7 +49,7 @@ fn main() -> Result<(), Box<dyn std::error::Error>> {
             // All rates calculation
             // Calculate all rates MSD (MinaSD)
             println!("\n--- All Rates MSD ---");
-            let msd = calc.calculate_all_rates_from_file(&chart_path)?;
+            let msd = calc.calculate_all_rates_from_file(&chart_path, true)?;
             println!("✅ All rates calculated!");
 
             let hashmap = msd.as_hashmap()?;
@@ -65,7 +65,8 @@ fn main() -> Result<(), Box<dyn std::error::Error>> {
 
             // Calculate with chart rate (1.5x chart speed)
             println!("\n--- Chart at 1.5x Speed ---");
-            let ssr_1_5x = calc.calculate_ssr_from_file(&chart_path, 1.0, 0.93, Some(1.5))?;
+            let ssr_1_5x =
+                calc.calculate_at_rate_from_file(&chart_path, 1.0, 0.93, Some(1.5), true)?;
             println!("   1.5x chart @ 1.0x calc @ 93%:");
             println!(
                 "   Overall: {:.2}, Stream: {:.2}, Tech: {:.2}\n",

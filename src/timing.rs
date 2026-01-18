@@ -1,16 +1,17 @@
 //! Timing utilities for BPM-aware chart processing
 //!
-//! This module handles timing point extraction and adaptive row quantization
-//! to match Etterna's internal representation (up to 192nd notes).
+//! This module handles timing point extraction and precise beat-based quantization.
+//! It uses a beat-space coordinate system (similar to StepMania) to ensure notes
+//! are snapped to correct musical divisions (up to 192nd notes) regardless of BPM changes.
 
-use rhythm_open_exchange::{RoxChart, TimingPoint};
+use rhythm_open_exchange::RoxChart;
 
-/// Standard snap divisions in ascending order of precision
-/// These match StepMania/Etterna's supported quantizations
-const SNAP_DIVISIONS: [u32; 10] = [4, 8, 12, 16, 24, 32, 48, 64, 96, 192];
-
-/// Maximum allowed timing error in microseconds for snap detection
-const SNAP_TOLERANCE_US: i64 = 1000; // 1ms tolerance
+/// Standard snap divisions (notes per measure)
+/// 4 = quarter notes (red)
+/// 8 = eighth notes (blue)
+/// ...
+/// 192 = very fine snap
+const SNAP_DIVISOR: f64 = 192.0;
 
 /// Represents a BPM section extracted from timing points
 #[derive(Debug, Clone, Copy)]
@@ -19,164 +20,148 @@ pub struct BpmSection {
     pub start_time_us: i64,
     /// Beats per minute
     pub bpm: f32,
-    /// Time signature (beats per measure, e.g. 4 for 4/4)
-    pub signature: u8,
+    /// Beat position where this section starts
+    pub start_beat: f64,
 }
 
 impl BpmSection {
-    /// Duration of one beat in microseconds
-    #[inline]
-    pub fn beat_duration_us(&self) -> f64 {
-        if self.bpm <= 0.0 {
-            return 60_000_000.0 / 120.0; // Default to 120 BPM
-        }
-        60_000_000.0 / self.bpm as f64
+    /// Scales the BPM of this section by a given rate.
+    pub fn scale_tempo(&mut self, rate: f32) {
+        log::debug!("Scaling tempo by factor {}", rate);
+        self.bpm *= rate;
     }
-
-    /// Duration of one measure in microseconds
-    #[inline]
-    pub fn measure_duration_us(&self) -> f64 {
-        self.beat_duration_us() * self.signature as f64
-    }
-
-    /// Duration of a specific snap division in microseconds
-    ///
-    /// Snap divisions are BEAT-based:
-    /// - 4th = quarter note = 1 beat
-    /// - 8th = 1/2 beat
-    /// - 16th = 1/4 beat
-    /// - 192nd = 1/48 beat
-    #[inline]
-    pub fn snap_duration_us(&self, division: u32) -> f64 {
-        // Division is relative to a whole note (4 beats)
-        // 4th = 4 beats / 4 = 1 beat
-        // 16th = 4 beats / 16 = 0.25 beats
-        self.beat_duration_us() * 4.0 / division as f64
-    }
-}
-
-/// Extracts BPM sections from ROX timing points
-pub fn extract_bpm_sections(timing_points: &[TimingPoint]) -> Vec<BpmSection> {
-    let mut sections: Vec<BpmSection> = timing_points
-        .iter()
-        .filter(|tp| !tp.is_inherited && tp.bpm > 0.0)
-        .map(|tp| BpmSection {
-            start_time_us: tp.time_us,
-            bpm: tp.bpm,
-            signature: if tp.signature > 0 { tp.signature } else { 4 },
-        })
-        .collect();
-
-    sections.sort_by_key(|s| s.start_time_us);
-
-    if sections.is_empty() {
-        sections.push(BpmSection {
-            start_time_us: 0,
-            bpm: 120.0,
-            signature: 4,
-        });
-    }
-
-    sections
-}
-
-/// Gets the BPM section active at a given time
-pub fn bpm_section_at_time(sections: &[BpmSection], time_us: i64) -> &BpmSection {
-    sections
-        .iter()
-        .rev()
-        .find(|s| s.start_time_us <= time_us)
-        .unwrap_or(&sections[0])
-}
-
-/// Finds the minimum snap division needed to accurately represent a note time.
-///
-/// Starts with 4ths and increases precision until the note fits within tolerance.
-/// Returns the quantized time and the division used.
-pub fn find_best_snap(time_us: i64, sections: &[BpmSection]) -> (i64, u32) {
-    let section = bpm_section_at_time(sections, time_us);
-    let offset_from_section = time_us - section.start_time_us;
-
-    // Try each snap division from coarsest to finest
-    for &division in &SNAP_DIVISIONS {
-        let snap_duration = section.snap_duration_us(division);
-        if snap_duration <= 0.0 {
-            continue;
-        }
-
-        // Calculate which snap index this time falls on
-        let snap_index = (offset_from_section as f64 / snap_duration).round() as i64;
-        let quantized_offset = (snap_index as f64 * snap_duration) as i64;
-        let quantized_time = section.start_time_us + quantized_offset;
-
-        // Check if this snap is close enough
-        let error = (time_us - quantized_time).abs();
-        if error <= SNAP_TOLERANCE_US {
-            return (quantized_time, division);
-        }
-    }
-
-    // If no snap fits within tolerance, use the finest (192nd) snap
-    let snap_duration = section.snap_duration_us(192);
-    let snap_index = (offset_from_section as f64 / snap_duration).round() as i64;
-    let quantized_offset = (snap_index as f64 * snap_duration) as i64;
-    (section.start_time_us + quantized_offset, 192)
-}
-
-/// Quantizes a time to the best fitting snap based on BPM
-///
-/// Uses adaptive snapping to find minimum division needed.
-pub fn quantize_adaptive(time_us: i64, sections: &[BpmSection]) -> i64 {
-    find_best_snap(time_us, sections).0
 }
 
 /// Extracts BPM sections from a RoxChart
 pub fn extract_bpm_sections_from_chart(chart: &RoxChart) -> Vec<BpmSection> {
-    extract_bpm_sections(&chart.timing_points)
+    // Collect and sort valid timing points
+    let mut points: Vec<_> = chart
+        .timing_points
+        .iter()
+        .filter(|tp| !tp.is_inherited && tp.bpm > 0.0)
+        .collect();
+
+    points.sort_by_key(|tp| tp.time_us);
+
+    if points.is_empty() {
+        log::debug!("No BPM sections found, using default 120 BPM");
+        return vec![BpmSection {
+            start_time_us: 0,
+            bpm: 120.0,
+            start_beat: 0.0,
+        }];
+    }
+
+    let mut sections = Vec::with_capacity(points.len());
+
+    // Handle initial section if chart starts before first timing point (rare but possible)
+    // Assuming 0 offset for now or first point covers 0.
+    // Usually first point is at 0 or earlier.
+
+    // First section always starts at its defined time.
+    // If it's > 0, we might need a default section before it?
+    // StepMania usually assumes 60 or 120 BPM before first point, or extends first point backwards.
+    // For simplicity, we just process points as they are.
+
+    // We need to calculate start_beat for each section cumulatively
+    // The first point is the anchor.
+
+    // Pre-calculate beats for each section
+    // We iterate points. For point N, its start_beat is determined by point N-1.
+
+    // Use the first point as the base
+    sections.push(BpmSection {
+        start_time_us: points[0].time_us,
+        bpm: points[0].bpm,
+        start_beat: 0.0, // We can define the first timing point as beat 0 for relative calculation
+                         // Or if we want strict SM behavior, we might need to handle negative time.
+                         // For MinaCalc, consistent relative time is usually enough.
+    });
+
+    for i in 1..points.len() {
+        let prev_section = &sections[i - 1];
+        let curr_point = points[i];
+
+        let delta_time = curr_point.time_us - prev_section.start_time_us;
+        // duration * bpm / 60
+        let delta_beats = (delta_time as f64 / 1_000_000.0) * (prev_section.bpm as f64 / 60.0);
+
+        let new_start_beat = prev_section.start_beat + delta_beats;
+
+        sections.push(BpmSection {
+            start_time_us: curr_point.time_us,
+            bpm: curr_point.bpm,
+            start_beat: new_start_beat,
+        });
+    }
+
+    log::debug!("Extracted {} BPM sections", sections.len());
+    sections
 }
 
-#[cfg(test)]
-mod tests {
-    use super::*;
-
-    fn make_120bpm_section() -> Vec<BpmSection> {
-        vec![BpmSection {
-            start_time_us: 0,
-            bpm: 120.0,
-            signature: 4,
-        }]
+/// Convert microseconds to beat position.
+/// This matches the logic from the user's provided `us_to_beat` but uses our pre-calculated BpmSections.
+pub fn us_to_beat(time_us: i64, sections: &[BpmSection]) -> f64 {
+    if sections.is_empty() {
+        return 0.0;
     }
 
-    #[test]
-    fn test_snap_duration() {
-        let section = BpmSection {
-            start_time_us: 0,
-            bpm: 120.0,
-            signature: 4,
-        };
-        // At 120 BPM, one beat = 500ms
-        // 4th (quarter) = 1 beat = 500ms
-        // 8th = 0.5 beat = 250ms
-        // 16th = 0.25 beat = 125ms
-        // 192nd = 1/48 beat ≈ 10.4ms
-        assert!((section.snap_duration_us(4) - 500_000.0).abs() < 1.0);
-        assert!((section.snap_duration_us(8) - 250_000.0).abs() < 1.0);
-        assert!((section.snap_duration_us(16) - 125_000.0).abs() < 1.0);
+    // Find the section that covers this time
+    // Sections are sorted by time.
+    // We want the last section where start_time <= time_us
+    let section_idx = sections
+        .partition_point(|s| s.start_time_us <= time_us)
+        .saturating_sub(1);
+
+    let section = &sections[section_idx];
+
+    // If time is before the first section, we project backwards using first section's BPM
+    // (delta will be negative)
+    let delta_time = time_us - section.start_time_us;
+    let delta_beats = (delta_time as f64 / 1_000_000.0) * (section.bpm as f64 / 60.0);
+
+    section.start_beat + delta_beats
+}
+
+/// Convert beat position to microseconds.
+/// Inverse of `us_to_beat`.
+pub fn beat_to_us(beat: f64, sections: &[BpmSection]) -> i64 {
+    if sections.is_empty() {
+        return 0;
     }
 
-    #[test]
-    fn test_adaptive_snap_prefers_coarse() {
-        let sections = make_120bpm_section();
-        // A note exactly on a 4th should use 4th division
-        let (_, div) = find_best_snap(500_000, &sections); // Exactly on beat 2
-        assert_eq!(div, 4);
-    }
+    // Find section covering this beat
+    // We assume sections are sorted by start_beat (which they should be if sorted by time)
+    let section_idx = sections
+        .partition_point(|s| s.start_beat <= beat)
+        .saturating_sub(1);
 
-    #[test]
-    fn test_adaptive_snap_16th() {
-        let sections = make_120bpm_section();
-        // A 16th note at 125ms should use 16th or coarser
-        let (quantized, _) = find_best_snap(125_000, &sections);
-        assert!((quantized - 125_000).abs() <= SNAP_TOLERANCE_US);
-    }
+    let section = &sections[section_idx];
+
+    let delta_beats = beat - section.start_beat;
+    let delta_seconds = delta_beats * (60.0 / section.bpm as f64);
+
+    section.start_time_us + (delta_seconds * 1_000_000.0).round() as i64
+}
+
+/// Quantizes a time to the nearest 1/192nd beat (or beat-grid resolution).
+/// Then returns the time in microseconds for that snapped beat.
+pub fn quantize_adaptive(time_us: i64, sections: &[BpmSection]) -> i64 {
+    let raw_beat = us_to_beat(time_us, sections);
+
+    // Snap to 192nd grid
+    let grid_res = SNAP_DIVISOR;
+    let snapped_beat = (raw_beat * grid_res).round() / grid_res;
+
+    let snapped_time = beat_to_us(snapped_beat, sections);
+
+    log::trace!(
+        "quantize: {}us -> beat {:.4} -> snapped {:.4} -> {}us",
+        time_us,
+        raw_beat,
+        snapped_beat,
+        snapped_time
+    );
+
+    snapped_time
 }

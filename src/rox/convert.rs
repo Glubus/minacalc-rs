@@ -57,6 +57,11 @@ pub fn chart_to_notes(chart: &RoxChart, rate: Option<f32>) -> RoxResult<Vec<Note
     // Sort by time
     notes.sort_by(|a, b| a.row_time.partial_cmp(&b.row_time).unwrap());
 
+    log::debug!(
+        "Converted {} notes (0 filtered) for chart: '{}'",
+        notes.len(),
+        chart.metadata.title
+    );
     // Validate all notes
     validate_notes(&notes)?;
 

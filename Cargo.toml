@@ -24,8 +24,10 @@ api = ["rox"]
 [dependencies]
 parking_lot = { version = "0.12", optional = true }
 once_cell = { version = "1.19", optional = true }
-rhythm-open-exchange = "0.3.3"
+rhythm-open-exchange = "0.4.0"
 rosu-map = { version = "0.2.1", optional = true }
+log = "0.4"
+env_logger = "0.11"
 
 [build-dependencies]
 cc = "1.0"

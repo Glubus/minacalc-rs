@@ -7,12 +7,13 @@
 //!   msd <file> --rate 1.0   - Calculate SSR at specific rate
 //!   msd <file> --json       - Output as JSON
 
-use std::path::PathBuf;
+use std::path::{Path, PathBuf};
 use std::process::ExitCode;
 
 use minacalc_rs::{Calc, RoxCalcExt, SkillsetScores};
 
 fn main() -> ExitCode {
+    env_logger::init();
     let args: Vec<String> = std::env::args().collect();
 
     if args.len() < 2 || args[1] == "--help" || args[1] == "-h" {
@@ -67,7 +68,7 @@ fn parse_rate(args: &[String]) -> Option<f32> {
 }
 
 fn run(
-    path: &PathBuf,
+    path: &Path,
     rate: Option<f32>,
     json: bool,
     capped: bool,
@@ -86,7 +87,7 @@ fn run(
 
 fn output_single_rate(
     calc: &Calc,
-    path: &PathBuf,
+    path: &Path,
     rate: f32,
     json: bool,
     capped: bool,
@@ -117,7 +118,7 @@ fn output_single_rate(
 
 fn output_all_rates(
     calc: &Calc,
-    path: &PathBuf,
+    path: &Path,
     json: bool,
     capped: bool,
 ) -> Result<(), Box<dyn std::error::Error>> {
@@ -220,7 +221,7 @@ fn get_dominant(s: &SkillsetScores) -> &'static str {
         .unwrap_or("Unknown")
 }
 
-fn truncate_path(path: &PathBuf, max: usize) -> String {
+fn truncate_path(path: &Path, max: usize) -> String {
     let s = path.file_name().unwrap_or_default().to_string_lossy();
     if s.len() > max {
         format!("...{}", &s[s.len() - max + 3..])
