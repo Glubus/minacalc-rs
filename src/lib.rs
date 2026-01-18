@@ -28,6 +28,9 @@ pub mod thread;
 #[cfg(feature = "rox")]
 pub mod rox;
 
+#[cfg(feature = "rox")]
+pub mod timing;
+
 #[cfg(feature = "utils")]
 pub mod utils;
 

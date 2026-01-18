@@ -22,7 +22,7 @@ public class Calculator : IDisposable
     /// <summary>
     /// Calculate SSR from a list of notes.
     /// </summary>
-    public MinaCalcScores CalculateSsr(MinaCalcNote[] notes, float musicRate = 1.0f, float scoreGoal = 93.0f)
+    public MinaCalcScores CalculateSsr(MinaCalcNote[] notes, float musicRate = 1.0f, float scoreGoal = 0.93f)
     {
         CheckDisposed();
 
@@ -49,7 +49,7 @@ public class Calculator : IDisposable
     /// <summary>
     /// Calculate SSR directly from a chart file.
     /// </summary>
-    public MinaCalcScores CalculateSsrFromFile(string path, float musicRate = 1.0f, float scoreGoal = 93.0f)
+    public MinaCalcScores CalculateSsrFromFile(string path, float musicRate = 1.0f, float scoreGoal = 0.93f)
     {
         CheckDisposed();
 
@@ -74,7 +74,7 @@ public class Calculator : IDisposable
     /// <summary>
     /// Calculate SSR from string content (e.g. .osu file content).
     /// </summary>
-    public MinaCalcScores CalculateSsrFromString(string content, string fileHint, float musicRate = 1.0f, float scoreGoal = 93.0f)
+    public MinaCalcScores CalculateSsrFromString(string content, string fileHint, float musicRate = 1.0f, float scoreGoal = 0.93f)
     {
         CheckDisposed();
         

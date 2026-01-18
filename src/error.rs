@@ -104,3 +104,50 @@ pub type MinaCalcResult<T> = Result<T, MinaCalcError>;
 
 #[cfg(feature = "rox")]
 pub type RoxResult<T> = Result<T, RoxError>;
+
+/// Custom error types for osu! beatmap operations
+#[cfg(feature = "osu")]
+#[derive(Debug)]
+pub enum OsuError {
+    /// Failed to parse osu! file
+    ParseFailed(String),
+    /// Unsupported game mode (only mania supported)
+    UnsupportedGameMode(String),
+    /// Unsupported key count
+    UnsupportedKeyCount(f32),
+    /// Unsupported column position
+    UnsupportedColumn(f32),
+    /// Unsupported hit object kind
+    UnsupportedHitObjectKind(String),
+    /// Hit object conversion error
+    HitObjectConversion(String),
+}
+
+#[cfg(feature = "osu")]
+impl fmt::Display for OsuError {
+    fn fmt(&self, f: &mut fmt::Formatter<'_>) -> fmt::Result {
+        match self {
+            OsuError::ParseFailed(msg) => write!(f, "Failed to parse osu! file: {}", msg),
+            OsuError::UnsupportedGameMode(mode) => write!(f, "Unsupported game mode: {}", mode),
+            OsuError::UnsupportedKeyCount(count) => write!(f, "Unsupported key count: {}", count),
+            OsuError::UnsupportedColumn(x) => write!(f, "Unsupported column position: {}", x),
+            OsuError::UnsupportedHitObjectKind(kind) => {
+                write!(f, "Unsupported hit object: {}", kind)
+            }
+            OsuError::HitObjectConversion(msg) => write!(f, "Hit object conversion error: {}", msg),
+        }
+    }
+}
+
+#[cfg(feature = "osu")]
+impl Error for OsuError {}
+
+#[cfg(feature = "osu")]
+impl From<OsuError> for MinaCalcError {
+    fn from(osu_err: OsuError) -> Self {
+        MinaCalcError::InternalError(format!("OSU error: {}", osu_err))
+    }
+}
+
+#[cfg(feature = "osu")]
+pub type OsuResult<T> = Result<T, OsuError>;

@@ -246,7 +246,7 @@ impl Calc {
             return Err(MinaCalcError::InvalidMusicRate(music_rate));
         }
 
-        if score_goal <= 0.0 || score_goal > 100.0 {
+        if score_goal <= 0.0 || score_goal > 1.0 {
             return Err(MinaCalcError::InvalidScoreGoal(score_goal));
         }
 

@@ -1,6 +1,6 @@
 [package]
 name = "minacalc-rs"
-version = "0.3.3"
+version = "0.3.4"
 edition = "2021"
 description = "Rust bindings for MinaCalc C++ library (Etterna rating calculator)"
 license = "MIT"
@@ -25,6 +25,7 @@ api = ["rox"]
 parking_lot = { version = "0.12", optional = true }
 once_cell = { version = "1.19", optional = true }
 rhythm-open-exchange = "0.3.3"
+rosu-map = { version = "0.2.1", optional = true }
 
 [build-dependencies]
 cc = "1.0"

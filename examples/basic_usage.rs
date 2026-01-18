@@ -109,7 +109,7 @@ fn main() -> Result<(), Box<dyn std::error::Error>> {
     println!("Calcul des scores SSR pour un taux spécifique...");
 
     // Calculer les scores SSR pour un taux de 1.0x avec un objectif de 93%
-    match calc.calc_ssr(&notes, 1.0, 93.0) {
+    match calc.calc_ssr(&notes, 1.0, 0.93) {
         Ok(ssr_scores) => {
             println!("Scores SSR calculés avec succès pour 1.0x à 93%!");
             println!("Overall: {:.2}", ssr_scores.overall);
