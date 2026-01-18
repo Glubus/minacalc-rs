@@ -4,7 +4,7 @@ build-backend = "maturin"
 
 [project]
 name = "minacalc-py"
-version = "0.4.0"
+version = "0.4.1"
 description = "Python bindings for MinaCalc - Etterna difficulty calculator"
 authors = [{ name = "Glubus", email = "osefcode@gmail.com" }]
 license = { text = "MIT" }
@@ -24,3 +24,6 @@ classifiers = [
 
 [tool.maturin]
 features = ["pyo3/extension-module"]
+
+
+

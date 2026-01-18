@@ -1,6 +1,6 @@
 [package]
 name = "minacalc-python"
-version = "0.4.0"
+version = "0.4.1"
 edition = "2021"
 description = "Python bindings for minacalc-rs (Etterna rating calculator)"
 license = "MIT"
@@ -18,3 +18,6 @@ minacalc-rs = { path = "../..", features = [
     "utils",
 ] }
 pyo3 = { version = "0.27", features = ["extension-module"] }
+
+
+
