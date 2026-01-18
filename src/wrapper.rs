@@ -1,7 +1,7 @@
 use crate::error::{MinaCalcError, MinaCalcResult};
 use crate::{
-    calc_msd, calc_ssr, calc_version, create_calc, destroy_calc, CalcHandle,
-    MsdForAllRates as BindingsMsdForAllRates, NoteInfo, Ssr,
+    calc_all_rates, calc_at_rate, calc_version, create_calc, destroy_calc, CalcHandle,
+    MsdForAllRates, NoteInfo, Ssr,
 };
 
 /// Represents a note in the rhythm game
@@ -168,8 +168,8 @@ impl From<AllRates> for super::MsdForAllRates {
     }
 }
 
-impl From<BindingsMsdForAllRates> for AllRates {
-    fn from(bindings_msd: BindingsMsdForAllRates) -> Self {
+impl From<MsdForAllRates> for AllRates {
+    fn from(bindings_msd: MsdForAllRates) -> Self {
         let mut msds = [SkillsetScores {
             overall: 0.0,
             stream: 0.0,
@@ -210,8 +210,9 @@ impl Calc {
         unsafe { calc_version() }
     }
 
-    /// Calculates MSD scores for all music rates
-    pub fn calc_msd(&self, notes: &[Note]) -> MinaCalcResult<AllRates> {
+    /// Calculates scores for all music rates (Optimized batch calculation)
+    /// capped: true for SSR (rated), false for MSD (uncapped)
+    pub fn calc_all_rates(&self, notes: &[Note], capped: bool) -> MinaCalcResult<AllRates> {
         if notes.is_empty() {
             return Err(MinaCalcError::NoNotesProvided);
         }
@@ -223,20 +224,32 @@ impl Calc {
 
         // Convert notes to C format
         let note_infos: Vec<NoteInfo> = notes.iter().map(|&note| note.into()).collect();
+        let cap_int = if capped { 1 } else { 0 };
 
-        let result = unsafe { calc_msd(self.handle, note_infos.as_ptr(), note_infos.len(), 4) };
+        // Hardcoded keycount 4 for legacy wrapper consistency
+        let result = unsafe {
+            crate::calc_all_rates(
+                self.handle,
+                note_infos.as_ptr(),
+                note_infos.len(),
+                4,
+                cap_int,
+            )
+        };
 
         let msd: AllRates = result.into();
         msd.validate()?;
         Ok(msd)
     }
 
-    /// Calculates SSR scores for a specific music rate and score goal
-    pub fn calc_ssr(
+    /// Calculates scores for a specific music rate
+    /// capped: true for SSR, false for MSD
+    pub fn calc_at_rate(
         &self,
         notes: &[Note],
         music_rate: f32,
         score_goal: f32,
+        capped: bool,
     ) -> MinaCalcResult<SkillsetScores> {
         if notes.is_empty() {
             return Err(MinaCalcError::NoNotesProvided);
@@ -246,6 +259,7 @@ impl Calc {
             return Err(MinaCalcError::InvalidMusicRate(music_rate));
         }
 
+        // Validating score goal only makes sense if capped or if we want to be strict
         if score_goal <= 0.0 || score_goal > 1.0 {
             return Err(MinaCalcError::InvalidScoreGoal(score_goal));
         }
@@ -257,15 +271,17 @@ impl Calc {
 
         // Convert notes to C format
         let mut note_infos: Vec<NoteInfo> = notes.iter().map(|&note| note.into()).collect();
+        let cap_int = if capped { 1 } else { 0 };
 
         let result = unsafe {
-            calc_ssr(
+            crate::calc_at_rate(
                 self.handle,
                 note_infos.as_mut_ptr(),
                 note_infos.len(),
                 music_rate,
                 score_goal,
                 4,
+                cap_int,
             )
         };
 

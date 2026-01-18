@@ -875,22 +875,24 @@ MinaSDCalc(const std::vector<NoteInfo>& NoteInfo,
 		   const float musicrate,
 		   const float goal,
 		   const unsigned keycount,
+		   bool ssr_mode,
 		   Calc* calc) -> std::vector<float>
 {
 	if (NoteInfo.size() <= 1) {
 		return dimples_the_all_zero_output;
 	}
-	calc->ssr = true;
+	calc->ssr = ssr_mode;
 	calc->debugmode = false;
 	calc->keycount = keycount;
 
-	return calc->CalcMain(NoteInfo, musicrate, min(goal, ssr_goal_cap));
+	return calc->CalcMain(NoteInfo, musicrate, min(goal, ssr_mode ? ssr_goal_cap : default_score_goal));
 }
 
 // Wrap difficulty calculation for all standard rates
 auto
 MinaSDCalc(const std::vector<NoteInfo>& NoteInfo,
 		   const unsigned keycount,
+		   bool ssr_mode,
 		   Calc* calc) -> MinaSD
 {
 	MinaSD allrates;
@@ -898,7 +900,7 @@ MinaSDCalc(const std::vector<NoteInfo>& NoteInfo,
 	const auto upper_rate = 21; // up to 2.1x (not including 2.1x)
 
 	if (NoteInfo.size() > 1) {
-		calc->ssr = false;
+		calc->ssr = ssr_mode;
 		calc->debugmode = false;
 		calc->keycount = keycount;
 		for (auto i = lower_rate; i < upper_rate; i++) {

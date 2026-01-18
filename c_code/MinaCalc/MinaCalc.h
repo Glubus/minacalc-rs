@@ -326,6 +326,7 @@ class Calc
 /// <param name="NoteInfo">Output from NoteData::SerializeNoteData2</param>
 /// <param name="musicrate">Music rate to adjust NoteInfo row times</param>
 /// <param name="goal">Given score value percentage - 1.0 is 100%</param>
+/// <param name="ssr_mode">If true, scales down low acc scores and caps at 40.</param>
 /// <param name="calc">Pointer to the Calc instance to use
 /// if using threads or a centralized Calc.</param>
 /// <returns>A list of the resulting skillset values.</returns>
@@ -334,11 +335,14 @@ MinaSDCalc(const std::vector<NoteInfo>& NoteInfo,
 		   float musicrate,
 		   float goal,
 		   const unsigned keycount,
+		   bool ssr_mode,
 		   Calc* calc) -> std::vector<float>;
+
 /// <summary>
 /// Calc driving function used for generating skillset values for caching.
 /// </summary>
 /// <param name="NoteInfo">Output from NoteData::SerializeNoteData2</param>
+/// <param name="ssr_mode">If true, calculates SSR (Capped). If false, MSD (Uncapped).</param>
 /// <param name="calc">Pointer to the Calc instance to use
 /// if using threads or a centralized Calc.</param>
 /// <returns>MinaSD, a list of the resulting skillset values,
@@ -346,6 +350,7 @@ MinaSDCalc(const std::vector<NoteInfo>& NoteInfo,
 MINACALC_API auto
 MinaSDCalc(const std::vector<NoteInfo>& NoteInfo,
 		   const unsigned keycount,
+		   bool ssr_mode,
 		   Calc* calc) -> MinaSD;
 /// <summary>
 /// Calc driving function used for generating skillset values for debugging.

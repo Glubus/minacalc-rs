@@ -20,21 +20,23 @@ public class Calculator : IDisposable
     public static int Version => Native.minacalc_version();
 
     /// <summary>
-    /// Calculate SSR from a list of notes.
+    /// Calculate scores for a specific rate.
+    /// capped: true for SSR, false for MSD
     /// </summary>
-    public MinaCalcScores CalculateSsr(MinaCalcNote[] notes, float musicRate = 1.0f, float scoreGoal = 0.93f)
+    public MinaCalcScores CalculateAtRate(MinaCalcNote[] notes, float musicRate = 1.0f, float scoreGoal = 0.93f, bool capped = false)
     {
         CheckDisposed();
 
         if (notes == null || notes.Length == 0)
             throw new ArgumentException("Notes cannot be null or empty", nameof(notes));
 
-        int result = Native.minacalc_calculate_ssr(
+        int result = Native.minacalc_calculate_at_rate(
             _handle,
             notes,
             (nuint)notes.Length,
             musicRate,
             scoreGoal,
+            capped ? 1 : 0,
             out var scores
         );
 
@@ -46,21 +48,25 @@ public class Calculator : IDisposable
         return scores;
     }
 
+
+
     /// <summary>
-    /// Calculate SSR directly from a chart file.
+    /// Calculate scores directly from a chart file.
+    /// capped: true for SSR, false for MSD
     /// </summary>
-    public MinaCalcScores CalculateSsrFromFile(string path, float musicRate = 1.0f, float scoreGoal = 0.93f)
+    public MinaCalcScores CalculateAtRateFromFile(string path, float musicRate = 1.0f, float scoreGoal = 0.93f, bool capped = false)
     {
         CheckDisposed();
 
         if (string.IsNullOrEmpty(path))
             throw new ArgumentException("Path cannot be empty", nameof(path));
 
-        int result = Native.minacalc_calculate_ssr_from_file(
+        int result = Native.minacalc_calculate_at_rate_from_file(
             _handle,
             path,
             musicRate,
             scoreGoal,
+            capped ? 1 : 0,
             out var scores
         );
 
@@ -71,22 +77,26 @@ public class Calculator : IDisposable
         return scores;
     }
 
+
+
     /// <summary>
-    /// Calculate SSR from string content (e.g. .osu file content).
+    /// Calculate scores from string content.
+    /// capped: true for SSR, false for MSD
     /// </summary>
-    public MinaCalcScores CalculateSsrFromString(string content, string fileHint, float musicRate = 1.0f, float scoreGoal = 0.93f)
+    public MinaCalcScores CalculateAtRateFromString(string content, string fileHint, float musicRate = 1.0f, float scoreGoal = 0.93f, bool capped = false)
     {
         CheckDisposed();
         
         if (string.IsNullOrEmpty(content))
              throw new ArgumentException("Content cannot be empty", nameof(content));
 
-        int result = Native.minacalc_calculate_ssr_from_string(
+        int result = Native.minacalc_calculate_at_rate_from_string(
             _handle,
             content,
             fileHint,
             musicRate,
             scoreGoal,
+            capped ? 1 : 0,
             out var scores
         );
 
@@ -97,7 +107,9 @@ public class Calculator : IDisposable
         return scores;
     }
 
-    public MinaCalcScores[] CalculateAllRates(MinaCalcNote[] notes)
+
+
+    public MinaCalcScores[] CalculateAllRates(MinaCalcNote[] notes, bool capped = false)
     {
         CheckDisposed();
 
@@ -116,6 +128,7 @@ public class Calculator : IDisposable
                 _handle,
                 notes,
                 (nuint)notes.Length,
+                capped ? 1 : 0,
                 ptr
             );
 
@@ -133,7 +146,7 @@ public class Calculator : IDisposable
         }
     }
 
-    public MinaCalcScores[] CalculateAllRatesFromFile(string path)
+    public MinaCalcScores[] CalculateAllRatesFromFile(string path, bool capped = false)
     {
         CheckDisposed();
 
@@ -148,6 +161,7 @@ public class Calculator : IDisposable
             int result = Native.minacalc_calculate_all_rates_from_file(
                 _handle,
                 path,
+                capped ? 1 : 0,
                 ptr
             );
 
@@ -165,7 +179,7 @@ public class Calculator : IDisposable
         }
     }
 
-     public MinaCalcScores[] CalculateAllRatesFromString(string content, string fileHint)
+     public MinaCalcScores[] CalculateAllRatesFromString(string content, string fileHint, bool capped = false)
     {
         CheckDisposed();
 
@@ -181,6 +195,7 @@ public class Calculator : IDisposable
                 _handle,
                 content,
                 fileHint,
+                capped ? 1 : 0,
                 ptr
             );
 

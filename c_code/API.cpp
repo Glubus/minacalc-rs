@@ -34,12 +34,15 @@ extern "C" {
 
 
 
-	MsdForAllRates calc_msd(CalcHandle *calc, const NoteInfo *rows, size_t num_rows, unsigned int keycount) {
+	/* Core Functions */
+
+	MsdForAllRates calc_all_rates(CalcHandle *calc, const NoteInfo *rows, size_t num_rows, unsigned int keycount, int cap) {
 		std::vector<NoteInfo> note_info(rows, rows + num_rows);
 
 		auto msd_vectors = MinaSDCalc(
 			note_info,
 			keycount,
+			cap != 0, // ssr_mode
 			reinterpret_cast<Calc*>(calc)
 		);
 
@@ -51,9 +54,7 @@ extern "C" {
 		return all_rates;
 	}
 
-
-
-	Ssr calc_ssr(CalcHandle *calc, NoteInfo *rows, size_t num_rows, float music_rate, float score_goal, unsigned int keycount) {
+	Ssr calc_at_rate(CalcHandle *calc, NoteInfo *rows, size_t num_rows, float music_rate, float score_goal, unsigned int keycount, int cap) {
 		std::vector<NoteInfo> note_info(rows, rows + num_rows);
 
 		auto skillsets = MinaSDCalc(
@@ -61,9 +62,22 @@ extern "C" {
 			music_rate,
 			score_goal,
 			keycount,
+			cap != 0, // ssr_mode
 			reinterpret_cast<Calc*>(calc)
 		);
 
 		return skillset_vector_to_ssr(skillsets);
+	}
+
+	/* Legacy Aliases */
+
+	MsdForAllRates calc_msd(CalcHandle *calc, const NoteInfo *rows, size_t num_rows, unsigned int keycount) {
+		// Legacy calc_msd returned uncapped MSDs
+		return calc_all_rates(calc, rows, num_rows, keycount, 0);
+	}
+
+	Ssr calc_ssr(CalcHandle *calc, NoteInfo *rows, size_t num_rows, float music_rate, float score_goal, unsigned int keycount) {
+		// Legacy calc_ssr returned capped SSRs
+		return calc_at_rate(calc, rows, num_rows, music_rate, score_goal, keycount, 1);
 	}
 }

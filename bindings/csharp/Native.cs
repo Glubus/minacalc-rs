@@ -16,12 +16,13 @@ internal static class Native
     public static extern void minacalc_free(IntPtr handle);
 
     [DllImport(LibraryName, CallingConvention = CallingConvention.Cdecl)]
-    public static extern int minacalc_calculate_ssr(
+    public static extern int minacalc_calculate_at_rate(
         IntPtr handle,
         [In] MinaCalcNote[] notes,
         nuint notes_len,
         float music_rate,
         float score_goal,
+        int capped,
         out MinaCalcScores result
     );
 
@@ -30,16 +31,18 @@ internal static class Native
         IntPtr handle,
         [In] MinaCalcNote[] notes,
         nuint notes_len,
+        int capped,
         IntPtr result // Points to CMinaCalcAllRates
     );
 
     // New API Methods
     [DllImport(LibraryName, CallingConvention = CallingConvention.Cdecl, CharSet = CharSet.Ansi)]
-    public static extern int minacalc_calculate_ssr_from_file(
+    public static extern int minacalc_calculate_at_rate_from_file(
         IntPtr handle,
         string path,
         float music_rate,
         float score_goal,
+        int capped,
         out MinaCalcScores result
     );
 
@@ -47,16 +50,18 @@ internal static class Native
     public static extern int minacalc_calculate_all_rates_from_file(
         IntPtr handle,
         string path,
+        int capped,
         IntPtr result
     );
 
     [DllImport(LibraryName, CallingConvention = CallingConvention.Cdecl, CharSet = CharSet.Ansi)]
-    public static extern int minacalc_calculate_ssr_from_string(
+    public static extern int minacalc_calculate_at_rate_from_string(
         IntPtr handle,
         string content,
         string file_hint,
         float music_rate,
         float score_goal,
+        int capped,
         out MinaCalcScores result
     );
 
@@ -65,6 +70,7 @@ internal static class Native
         IntPtr handle,
         string content,
         string file_hint,
+        int capped,
         IntPtr result
     );
 }

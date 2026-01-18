@@ -77,12 +77,13 @@ pub extern "C" fn minacalc_free(handle: *mut MinaCalcHandle) {
 }
 
 #[no_mangle]
-pub extern "C" fn minacalc_calculate_ssr(
+pub extern "C" fn minacalc_calculate_at_rate(
     handle: *const MinaCalcHandle,
     notes: *const CMinaCalcNote,
     notes_len: usize,
     music_rate: f32,
     score_goal: f32,
+    capped: i32,
     result: *mut CMinaCalcScores,
 ) -> i32 {
     if handle.is_null() || notes.is_null() || result.is_null() {
@@ -94,8 +95,9 @@ pub extern "C" fn minacalc_calculate_ssr(
 
     // Convert C notes to Rust notes
     let rust_notes: Vec<Note> = notes_slice.iter().map(|&n| n.into()).collect();
+    let is_capped = capped != 0;
 
-    match calc.calc_ssr(&rust_notes, music_rate, score_goal) {
+    match calc.calc_at_rate(&rust_notes, music_rate, score_goal, is_capped) {
         Ok(scores) => {
             unsafe {
                 *result = scores.into();
@@ -116,6 +118,7 @@ pub extern "C" fn minacalc_calculate_all_rates(
     handle: *const MinaCalcHandle,
     notes: *const CMinaCalcNote,
     notes_len: usize,
+    capped: i32,
     result: *mut CMinaCalcAllRates,
 ) -> i32 {
     if handle.is_null() || notes.is_null() || result.is_null() {
@@ -127,8 +130,9 @@ pub extern "C" fn minacalc_calculate_all_rates(
 
     // Convert C notes to Rust notes
     let rust_notes: Vec<Note> = notes_slice.iter().map(|&n| n.into()).collect();
+    let is_capped = capped != 0;
 
-    match calc.calc_msd(&rust_notes) {
+    match calc.calc_all_rates(&rust_notes, is_capped) {
         Ok(all_rates) => {
             unsafe {
                 for (i, scores) in all_rates.msds.iter().enumerate() {
@@ -146,11 +150,12 @@ pub extern "C" fn minacalc_calculate_all_rates(
 // -------------------------------------------------------------------------
 
 #[no_mangle]
-pub extern "C" fn minacalc_calculate_ssr_from_file(
+pub extern "C" fn minacalc_calculate_at_rate_from_file(
     handle: *const MinaCalcHandle,
     path: *const c_char,
     music_rate: f32,
     score_goal: f32,
+    capped: i32,
     result: *mut CMinaCalcScores,
 ) -> i32 {
     if handle.is_null() || path.is_null() || result.is_null() {
@@ -164,7 +169,9 @@ pub extern "C" fn minacalc_calculate_ssr_from_file(
         Err(_) => return -2, // Invalid UTF-8
     };
 
-    match calc.calculate_ssr_from_file(path_str, music_rate, score_goal, None) {
+    let is_capped = capped != 0;
+
+    match calc.calculate_at_rate_from_file(path_str, music_rate, score_goal, None, is_capped) {
         Ok(scores) => {
             unsafe {
                 *result = scores.into();
@@ -179,6 +186,7 @@ pub extern "C" fn minacalc_calculate_ssr_from_file(
 pub extern "C" fn minacalc_calculate_all_rates_from_file(
     handle: *const MinaCalcHandle,
     path: *const c_char,
+    capped: i32,
     result: *mut CMinaCalcAllRates,
 ) -> i32 {
     if handle.is_null() || path.is_null() || result.is_null() {
@@ -192,7 +200,9 @@ pub extern "C" fn minacalc_calculate_all_rates_from_file(
         Err(_) => return -2,
     };
 
-    match calc.calculate_all_rates_from_file(path_str) {
+    let is_capped = capped != 0;
+
+    match calc.calculate_all_rates_from_file(path_str, is_capped) {
         Ok(all_rates) => {
             unsafe {
                 for (i, scores) in all_rates.msds.iter().enumerate() {
@@ -206,12 +216,13 @@ pub extern "C" fn minacalc_calculate_all_rates_from_file(
 }
 
 #[no_mangle]
-pub extern "C" fn minacalc_calculate_ssr_from_string(
+pub extern "C" fn minacalc_calculate_at_rate_from_string(
     handle: *const MinaCalcHandle,
     content: *const c_char,
     file_hint: *const c_char,
     music_rate: f32,
     score_goal: f32,
+    capped: i32,
     result: *mut CMinaCalcScores,
 ) -> i32 {
     if handle.is_null() || content.is_null() || result.is_null() {
@@ -234,12 +245,15 @@ pub extern "C" fn minacalc_calculate_ssr_from_string(
         None
     };
 
-    match calc.calculate_ssr_from_string(
+    let is_capped = capped != 0;
+
+    match calc.calculate_at_rate_from_string(
         content_str,
         hint_str.unwrap_or(""),
         music_rate,
         score_goal,
         None,
+        is_capped,
     ) {
         Ok(scores) => {
             unsafe {
@@ -256,6 +270,7 @@ pub extern "C" fn minacalc_calculate_all_rates_from_string(
     handle: *const MinaCalcHandle,
     content: *const c_char,
     file_hint: *const c_char,
+    capped: i32,
     result: *mut CMinaCalcAllRates,
 ) -> i32 {
     if handle.is_null() || content.is_null() || result.is_null() {
@@ -278,7 +293,9 @@ pub extern "C" fn minacalc_calculate_all_rates_from_string(
         None
     };
 
-    match calc.calculate_all_rates_from_string(content_str, hint_str.unwrap_or("")) {
+    let is_capped = capped != 0;
+
+    match calc.calculate_all_rates_from_string(content_str, hint_str.unwrap_or(""), is_capped) {
         Ok(all_rates) => {
             unsafe {
                 for (i, scores) in all_rates.msds.iter().enumerate() {

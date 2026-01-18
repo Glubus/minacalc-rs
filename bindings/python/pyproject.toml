@@ -4,7 +4,7 @@ build-backend = "maturin"
 
 [project]
 name = "minacalc-py"
-version = "0.3.5"
+version = "0.4.0"
 description = "Python bindings for MinaCalc - Etterna difficulty calculator"
 authors = [{ name = "Glubus", email = "osefcode@gmail.com" }]
 license = { text = "MIT" }

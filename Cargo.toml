@@ -1,6 +1,6 @@
 [package]
 name = "minacalc-rs"
-version = "0.3.5"
+version = "0.4.0"
 edition = "2021"
 description = "Rust bindings for MinaCalc C++ library (Etterna rating calculator)"
 license = "MIT"
@@ -46,3 +46,8 @@ required-features = ["rox", "hashmap"]
 name = "utils_example"
 path = "examples/utils_example.rs"
 required-features = ["utils"]
+
+[[bin]]
+name = "msd"
+path = "src/bin/msd.rs"
+required-features = ["rox"]

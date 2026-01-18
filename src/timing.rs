@@ -40,9 +40,18 @@ impl BpmSection {
     }
 
     /// Duration of a specific snap division in microseconds
+    ///
+    /// Snap divisions are BEAT-based:
+    /// - 4th = quarter note = 1 beat
+    /// - 8th = 1/2 beat
+    /// - 16th = 1/4 beat
+    /// - 192nd = 1/48 beat
     #[inline]
     pub fn snap_duration_us(&self, division: u32) -> f64 {
-        self.measure_duration_us() / division as f64
+        // Division is relative to a whole note (4 beats)
+        // 4th = 4 beats / 4 = 1 beat
+        // 16th = 4 beats / 16 = 0.25 beats
+        self.beat_duration_us() * 4.0 / division as f64
     }
 }
 
@@ -145,9 +154,13 @@ mod tests {
             bpm: 120.0,
             signature: 4,
         };
-        // At 120 BPM, one beat = 500ms, one measure = 2000ms
-        // 4th note = 500ms, 16th = 125ms, 192nd ≈ 10.4ms
+        // At 120 BPM, one beat = 500ms
+        // 4th (quarter) = 1 beat = 500ms
+        // 8th = 0.5 beat = 250ms
+        // 16th = 0.25 beat = 125ms
+        // 192nd = 1/48 beat ≈ 10.4ms
         assert!((section.snap_duration_us(4) - 500_000.0).abs() < 1.0);
+        assert!((section.snap_duration_us(8) - 250_000.0).abs() < 1.0);
         assert!((section.snap_duration_us(16) - 125_000.0).abs() < 1.0);
     }
 

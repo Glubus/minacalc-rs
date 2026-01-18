@@ -28,7 +28,7 @@ Add this to your `Cargo.toml`:
 
 ```toml
 [dependencies]
-minacalc-rs = "0.3.5"
+minacalc-rs = "0.4.0"
 ```
 
 ### Feature Flags
@@ -37,7 +37,7 @@ The crate supports several optional features:
 
 ```toml
 [dependencies]
-minacalc-rs = { version = "0.3.5", features = ["hashmap", "thread", "rox", "utils"] }
+minacalc-rs = { version = "0.4.0", features = ["hashmap", "thread", "rox", "utils"] }
 ```
 
 - **`hashmap`** (default): Provides HashMap conversion for MSD results
@@ -265,6 +265,11 @@ This project is licensed under the MIT License - see the [LICENSE](LICENSE) file
 - **Rust Community**: For the excellent tooling and ecosystem
 
 ## Changelog
+
+### v0.4.0
+- **Unified API**: Consolidated calculation methods into generic `calculate_at_rate` and `calculate_all_rates`.
+- **Capped Parameter**: Introduced `capped` parameter to toggle between SSR (capped) and MSD (uncapped/skillset rating) calculations. Defaults to `false` (MSD).
+- **Breaking Change**: Removed legacy aliases (`calc_msd`, `calc_ssr`, `CalculateSsr`, `CalculateSsrFromFile`) in favor of the new generic API.
 
 ### v0.3.5
 - Fixed score_goal parameter (now uses 0.93 instead of 93.0)

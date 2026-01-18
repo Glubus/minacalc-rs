@@ -79,7 +79,7 @@ fn main() -> Result<(), Box<dyn std::error::Error>> {
     println!("Calcul des scores MSD pour tous les taux de musique...");
 
     // Calculer les scores MSD pour tous les taux (0.7x à 2.0x)
-    match calc.calc_msd(&notes) {
+    match calc.calc_all_rates(&notes, false) {
         Ok(msd_results) => {
             println!("Scores MSD calculés avec succès!\n");
 
@@ -109,7 +109,7 @@ fn main() -> Result<(), Box<dyn std::error::Error>> {
     println!("Calcul des scores SSR pour un taux spécifique...");
 
     // Calculer les scores SSR pour un taux de 1.0x avec un objectif de 93%
-    match calc.calc_ssr(&notes, 1.0, 0.93) {
+    match calc.calc_at_rate(&notes, 1.0, 0.93, true) {
         Ok(ssr_scores) => {
             println!("Scores SSR calculés avec succès pour 1.0x à 93%!");
             println!("Overall: {:.2}", ssr_scores.overall);

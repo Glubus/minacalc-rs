@@ -67,89 +67,67 @@ impl PyCalc {
         })
     }
 
-    /// Calculate SSR (Skillset-Specific Rating) from a chart file
+    /// Calculate scores for a specific rate from a chart file
     ///
     /// Args:
     ///     path (str): Path to the chart file (.osu, .sm, .rox)
     ///     music_rate (float): Music rate (e.g., 1.0 for normal, 1.5 for 1.5x)
     ///     score_goal (float): Score goal percentage (0-100)
     ///     chart_rate (float, optional): Chart rate modifier (default: None)
+    ///     capped (bool, optional): Whether to cap the difficulty (SSR) or not (MSD) (default: False)
     ///
     /// Returns:
     ///     SkillsetScores: Skillset scores object with attributes for each skillset
-    ///
-    /// Example:
-    ///     >>> calc = Calculator()
-    ///     >>> scores = calc.calculate_ssr_from_file("chart.osu", 1.0, 93.0)
-    ///     >>> print(scores.overall)
-    ///     >>> print(scores.stream)
-    #[pyo3(signature = (path, music_rate, score_goal, chart_rate=None))]
-    fn calculate_ssr_from_file(
+    #[pyo3(signature = (path, music_rate, score_goal, chart_rate=None, capped=false))]
+    fn calculate_at_rate_from_file(
         &self,
         path: &str,
         music_rate: f32,
         score_goal: f32,
         chart_rate: Option<f32>,
+        capped: bool,
     ) -> PyResult<PySkillsetScores> {
         let scores = self
             .inner
-            .calculate_ssr_from_file(path, music_rate, score_goal, chart_rate)
+            .calculate_at_rate_from_file(path, music_rate, score_goal, chart_rate, capped)
             .map_err(|e| PyValueError::new_err(format!("{}", e)))?;
 
         Ok(scores.into())
     }
 
-    /// Calculate SSR from chart string content
-    ///
-    /// Args:
-    ///     content (str): Chart file content as string
-    ///     file_extension (str): File extension hint (e.g., "osu", "sm") - currently unused as format is auto-detected
-    ///     music_rate (float): Music rate
-    ///     score_goal (float): Score goal percentage (0-100)
-    ///     chart_rate (float, optional): Chart rate modifier (default: None)
-    ///
-    /// Returns:
-    ///     SkillsetScores: Skillset scores object
-    ///
-    /// Example:
-    ///     >>> calc = Calculator()
-    ///     >>> with open("chart.osu", "r") as f:
-    ///     >>>     content = f.read()
-    ///     >>> scores = calc.calculate_ssr_from_string(content, "osu", 1.0, 93.0)
-    #[pyo3(signature = (content, file_extension, music_rate, score_goal, chart_rate=None))]
-    fn calculate_ssr_from_string(
+    /// Calculate scores from chart string content
+    #[pyo3(signature = (content, file_extension, music_rate, score_goal, chart_rate=None, capped=false))]
+    fn calculate_at_rate_from_string(
         &self,
         content: &str,
         file_extension: &str,
         music_rate: f32,
         score_goal: f32,
         chart_rate: Option<f32>,
+        capped: bool,
     ) -> PyResult<PySkillsetScores> {
         let scores = self
             .inner
-            .calculate_ssr_from_string(content, file_extension, music_rate, score_goal, chart_rate)
+            .calculate_at_rate_from_string(
+                content,
+                file_extension,
+                music_rate,
+                score_goal,
+                chart_rate,
+                capped,
+            )
             .map_err(|e| PyValueError::new_err(format!("{}", e)))?;
 
         Ok(scores.into())
     }
 
-    /// Calculate MSD (Mina Standardized Difficulty) for all rates from a file
-    ///
-    /// Args:
-    ///     path (str): Path to the chart file
-    ///
-    /// Returns:
-    ///     dict: Dictionary with rate strings as keys (e.g., "1.0", "1.5") and SkillsetScores as values
-    ///
-    /// Example:
-    ///     >>> calc = Calculator()
-    ///     >>> all_rates = calc.calculate_all_rates_from_file("chart.osu")
-    ///     >>> print(all_rates["1.0"].overall)  # MSD at 1.0x rate
-    ///     >>> print(all_rates["1.5"].stream)   # Stream MSD at 1.5x rate
-    fn calculate_all_rates_from_file(&self, path: &str) -> PyResult<Py<PyAny>> {
+    /// Calculate scores for all rates from a file
+    /// capped: defaults to False (MSD)
+    #[pyo3(signature = (path, capped=false))]
+    fn calculate_all_rates_from_file(&self, path: &str, capped: bool) -> PyResult<Py<PyAny>> {
         let all_rates = self
             .inner
-            .calculate_all_rates_from_file(path)
+            .calculate_all_rates_from_file(path, capped)
             .map_err(|e| PyValueError::new_err(format!("{}", e)))?;
 
         Python::with_gil(|py| {
@@ -166,28 +144,18 @@ impl PyCalc {
         })
     }
 
-    /// Calculate MSD for all rates from string content
-    ///
-    /// Args:
-    ///     content (str): Chart file content as string
-    ///     file_extension (str): File extension hint (e.g., "osu", "sm") - currently unused as format is auto-detected
-    ///
-    /// Returns:
-    ///     dict: Dictionary with rate strings as keys and SkillsetScores as values
-    ///
-    /// Example:
-    ///     >>> calc = Calculator()
-    ///     >>> with open("chart.sm", "r") as f:
-    ///     >>>     content = f.read()
-    ///     >>> all_rates = calc.calculate_all_rates_from_string(content, "sm")
+    /// Calculate scores for all rates from string content
+    /// capped: defaults to False (MSD)
+    #[pyo3(signature = (content, file_extension, capped=false))]
     fn calculate_all_rates_from_string(
         &self,
         content: &str,
         file_extension: &str,
+        capped: bool,
     ) -> PyResult<Py<PyAny>> {
         let all_rates = self
             .inner
-            .calculate_all_rates_from_string(content, file_extension)
+            .calculate_all_rates_from_string(content, file_extension, capped)
             .map_err(|e| PyValueError::new_err(format!("{}", e)))?;
 
         Python::with_gil(|py| {
