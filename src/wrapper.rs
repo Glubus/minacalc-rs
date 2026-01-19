@@ -188,7 +188,9 @@ impl From<MsdForAllRates> for AllRates {
 }
 
 /// Main handler for difficulty calculations
-#[derive(Clone)]
+///
+/// This struct is NOT Clone or Copy because the underlying C++ handle
+/// must only be owned by one Rust instance at a time.
 pub struct Calc {
     pub(crate) handle: *mut CalcHandle,
 }
