@@ -9,7 +9,7 @@
     <Authors>Glubus</Authors>
     <Description>C# bindings for MinaCalc, a rhythm game difficulty calculator.</Description>
     <PackageId>MinaCalc</PackageId>
-    <Version>0.4.1</Version>
+    <Version>0.4.2</Version>
     <PackageTags>rhythm-game;difficulty-calculator;native;rust;minacalc</PackageTags>
     <PackageLicenseExpression>MIT</PackageLicenseExpression>
     <RepositoryUrl>https://github.com/Glubus/minacalc-rs</RepositoryUrl>
