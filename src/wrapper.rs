@@ -215,10 +215,16 @@ impl Calc {
 
     /// Calculates scores for all music rates (Optimized batch calculation)
     /// capped: true for    /// Calculates MSD scores for all music rates (Uncapped)
-    pub fn calc_all_rates(&self, notes: &[Note], capped: bool) -> MinaCalcResult<AllRates> {
+    pub fn calc_all_rates(
+        &self,
+        notes: &[Note],
+        key_count: u32,
+        capped: bool,
+    ) -> MinaCalcResult<AllRates> {
         debug!(
-            "calc_all_rates called with {} notes, capped: {}",
+            "calc_all_rates called with {} notes, key_count: {}, capped: {}",
             notes.len(),
+            key_count,
             capped
         );
         if notes.is_empty() {
@@ -241,7 +247,7 @@ impl Calc {
                 self.handle,
                 note_infos.as_mut_ptr(),
                 note_infos.len(),
-                4,
+                key_count,
                 cap_int,
             )
         };
@@ -260,13 +266,15 @@ impl Calc {
         notes: &[Note],
         music_rate: f32,
         score_goal: f32,
+        key_count: u32,
         capped: bool,
     ) -> MinaCalcResult<SkillsetScores> {
         debug!(
-            "calc_at_rate called with {} notes, rate: {}, goal: {}, capped: {}",
+            "calc_at_rate called with {} notes, rate: {}, goal: {}, key_count: {}, capped: {}",
             notes.len(),
             music_rate,
             score_goal,
+            key_count,
             capped
         );
         if notes.is_empty() {
@@ -302,7 +310,7 @@ impl Calc {
                 note_infos.len(),
                 music_rate,
                 score_goal,
-                4,
+                key_count,
                 cap_int,
             )
         };

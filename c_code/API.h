@@ -38,7 +38,3 @@ MsdForAllRates calc_all_rates(CalcHandle *calc, const NoteInfo *rows, size_t num
 // cap: 1 for SSR (capped, rated), 0 for MSD (uncapped, raw difficulty)
 // score_goal: relevant for SSR (usually 0.93), ignored/default for MSD
 Ssr calc_at_rate(CalcHandle *calc, NoteInfo *rows, size_t num_rows, float music_rate, float score_goal, unsigned int keycount, int cap);
-
-// Legacy aliases (mapped to new functions with appropriate cap settings)
-MsdForAllRates calc_msd(CalcHandle *calc, const NoteInfo *rows, size_t num_rows, unsigned int keycount);
-Ssr calc_ssr(CalcHandle *calc, NoteInfo *rows, size_t num_rows, float music_rate, float score_goal, unsigned int keycount);

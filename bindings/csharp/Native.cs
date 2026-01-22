@@ -22,6 +22,7 @@ internal static class Native
         nuint notes_len,
         float music_rate,
         float score_goal,
+        uint key_count,
         int capped,
         out MinaCalcScores result
     );
@@ -31,6 +32,7 @@ internal static class Native
         IntPtr handle,
         [In] MinaCalcNote[] notes,
         nuint notes_len,
+        uint key_count,
         int capped,
         IntPtr result // Points to CMinaCalcAllRates
     );

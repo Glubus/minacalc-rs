@@ -84,6 +84,7 @@ pub extern "C" fn minacalc_calculate_at_rate(
     notes_len: usize,
     music_rate: f32,
     score_goal: f32,
+    key_count: u32,
     capped: i32,
     result: *mut CMinaCalcScores,
 ) -> i32 {
@@ -98,7 +99,7 @@ pub extern "C" fn minacalc_calculate_at_rate(
     let rust_notes: Vec<Note> = notes_slice.iter().map(|&n| n.into()).collect();
     let is_capped = capped != 0;
 
-    match calc.calc_at_rate(&rust_notes, music_rate, score_goal, is_capped) {
+    match calc.calc_at_rate(&rust_notes, music_rate, score_goal, key_count, is_capped) {
         Ok(scores) => {
             unsafe {
                 *result = scores.into();
@@ -119,6 +120,7 @@ pub extern "C" fn minacalc_calculate_all_rates(
     handle: *const MinaCalcHandle,
     notes: *const CMinaCalcNote,
     notes_len: usize,
+    key_count: u32,
     capped: i32,
     result: *mut CMinaCalcAllRates,
 ) -> i32 {
@@ -133,7 +135,7 @@ pub extern "C" fn minacalc_calculate_all_rates(
     let rust_notes: Vec<Note> = notes_slice.iter().map(|&n| n.into()).collect();
     let is_capped = capped != 0;
 
-    match calc.calc_all_rates(&rust_notes, is_capped) {
+    match calc.calc_all_rates(&rust_notes, key_count, is_capped) {
         Ok(all_rates) => {
             unsafe {
                 for (i, scores) in all_rates.msds.iter().enumerate() {

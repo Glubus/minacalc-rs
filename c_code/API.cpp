@@ -69,15 +69,4 @@ extern "C" {
 		return skillset_vector_to_ssr(skillsets);
 	}
 
-	/* Legacy Aliases */
-
-	MsdForAllRates calc_msd(CalcHandle *calc, const NoteInfo *rows, size_t num_rows, unsigned int keycount) {
-		// Legacy calc_msd returned uncapped MSDs
-		return calc_all_rates(calc, rows, num_rows, keycount, 0);
-	}
-
-	Ssr calc_ssr(CalcHandle *calc, NoteInfo *rows, size_t num_rows, float music_rate, float score_goal, unsigned int keycount) {
-		// Legacy calc_ssr returned capped SSRs
-		return calc_at_rate(calc, rows, num_rows, music_rate, score_goal, keycount, 1);
-	}
 }

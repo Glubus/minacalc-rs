@@ -73,8 +73,9 @@ impl ThreadCalc {
         notes: &[Note],
         music_rate: f32,
         score_goal: f32,
+        key_count: u32,
     ) -> MinaCalcResult<SkillsetScores> {
-        self.calc_at_rate(notes, music_rate, score_goal, true)
+        self.calc_at_rate(notes, music_rate, score_goal, key_count, true)
     }
 
     /// Calculates MSD at a specific rate.
@@ -83,8 +84,9 @@ impl ThreadCalc {
         notes: &[Note],
         music_rate: f32,
         score_goal: f32,
+        key_count: u32,
     ) -> MinaCalcResult<SkillsetScores> {
-        self.calc_at_rate(notes, music_rate, score_goal, false)
+        self.calc_at_rate(notes, music_rate, score_goal, key_count, false)
     }
 
     /// Calculates scores for a specific music rate.
@@ -93,6 +95,7 @@ impl ThreadCalc {
         notes: &[Note],
         music_rate: f32,
         score_goal: f32,
+        key_count: u32,
         capped: bool,
     ) -> MinaCalcResult<SkillsetScores> {
         if notes.is_empty() {
@@ -123,7 +126,7 @@ impl ThreadCalc {
                     note_infos.len(),
                     music_rate,
                     score_goal,
-                    4,
+                    key_count,
                     cap_int,
                 )
             };
@@ -135,7 +138,12 @@ impl ThreadCalc {
     }
 
     /// Calculates scores for all music rates.
-    pub fn calc_all_rates(&self, notes: &[Note], capped: bool) -> MinaCalcResult<AllRates> {
+    pub fn calc_all_rates(
+        &self,
+        notes: &[Note],
+        key_count: u32,
+        capped: bool,
+    ) -> MinaCalcResult<AllRates> {
         if notes.is_empty() {
             return Err(MinaCalcError::NoNotesProvided);
         }
@@ -156,7 +164,7 @@ impl ThreadCalc {
                     handle,
                     note_infos.as_mut_ptr(),
                     note_infos.len(),
-                    4,
+                    key_count,
                     cap_int,
                 )
             };
@@ -329,8 +337,9 @@ pub fn calc_ssr(
     notes: &[Note],
     music_rate: f32,
     score_goal: f32,
+    key_count: u32,
 ) -> MinaCalcResult<SkillsetScores> {
-    ThreadCalc::new()?.calc_ssr(notes, music_rate, score_goal)
+    ThreadCalc::new()?.calc_ssr(notes, music_rate, score_goal, key_count)
 }
 
 /// Convenience function: calculate MSD without creating ThreadCalc explicitly.
@@ -338,18 +347,19 @@ pub fn calc_msd(
     notes: &[Note],
     music_rate: f32,
     score_goal: f32,
+    key_count: u32,
 ) -> MinaCalcResult<SkillsetScores> {
-    ThreadCalc::new()?.calc_msd(notes, music_rate, score_goal)
+    ThreadCalc::new()?.calc_msd(notes, music_rate, score_goal, key_count)
 }
 
 /// Convenience function: calculate all rates SSR.
-pub fn calc_all_rates_ssr(notes: &[Note]) -> MinaCalcResult<AllRates> {
-    ThreadCalc::new()?.calc_all_rates(notes, true)
+pub fn calc_all_rates_ssr(notes: &[Note], key_count: u32) -> MinaCalcResult<AllRates> {
+    ThreadCalc::new()?.calc_all_rates(notes, key_count, true)
 }
 
 /// Convenience function: calculate all rates MSD.
-pub fn calc_all_rates_msd(notes: &[Note]) -> MinaCalcResult<AllRates> {
-    ThreadCalc::new()?.calc_all_rates(notes, false)
+pub fn calc_all_rates_msd(notes: &[Note], key_count: u32) -> MinaCalcResult<AllRates> {
+    ThreadCalc::new()?.calc_all_rates(notes, key_count, false)
 }
 
 #[cfg(test)]

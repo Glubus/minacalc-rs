@@ -50,7 +50,7 @@ pub fn chart_to_notes(chart: &RoxChart, rate: Option<f32>) -> RoxResult<Vec<Note
         .into_iter()
         .map(|(time_us, notes)| Note {
             notes,
-            row_time: (time_us as f64 / 1_000_000.0) as f32,
+            row_time: (time_us as f32 / 1_000_000.0),
         })
         .collect();
 

@@ -23,7 +23,7 @@ public class Calculator : IDisposable
     /// Calculate scores for a specific rate.
     /// capped: true for SSR, false for MSD
     /// </summary>
-    public MinaCalcScores CalculateAtRate(MinaCalcNote[] notes, float musicRate = 1.0f, float scoreGoal = 0.93f, bool capped = false)
+    public MinaCalcScores CalculateAtRate(MinaCalcNote[] notes, float musicRate = 1.0f, float scoreGoal = 0.93f, uint keyCount = 4, bool capped = false)
     {
         CheckDisposed();
 
@@ -36,6 +36,7 @@ public class Calculator : IDisposable
             (nuint)notes.Length,
             musicRate,
             scoreGoal,
+            keyCount,
             capped ? 1 : 0,
             out var scores
         );
@@ -100,7 +101,7 @@ public class Calculator : IDisposable
             out var scores
         );
 
-         if (result != 0)
+        if (result != 0)
         {
              throw new Exception($"Calculation failed with error code: {result}");
         }
@@ -109,7 +110,7 @@ public class Calculator : IDisposable
 
 
 
-    public MinaCalcScores[] CalculateAllRates(MinaCalcNote[] notes, bool capped = false)
+    public MinaCalcScores[] CalculateAllRates(MinaCalcNote[] notes, uint keyCount = 4, bool capped = false)
     {
         CheckDisposed();
 
@@ -128,6 +129,7 @@ public class Calculator : IDisposable
                 _handle,
                 notes,
                 (nuint)notes.Length,
+                keyCount,
                 capped ? 1 : 0,
                 ptr
             );
