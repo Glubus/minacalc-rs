@@ -15,16 +15,13 @@ fn main() {
 
     // Détecter le compilateur et ajouter les flags appropriés
     let target = env::var("TARGET").unwrap_or_default();
+    build.define("STANDALONE_CALC", None);
     if target.contains("msvc") {
-        // MSVC: utiliser /std:c++20 au lieu de -std=c++20
         build.flag("/std:c++20");
-        // Définir STANDALONE_CALC pour exclure les dépendances Stepmania
-        build.define("STANDALONE_CALC", None);
+        build.flag("/W0");
     } else {
-        // GCC/Clang: utiliser -std=c++20
         build.flag("-std=c++20");
-        // Définir STANDALONE_CALC pour exclure les dépendances Stepmania
-        build.define("STANDALONE_CALC", None);
+        build.flag("-w");
     }
 
     // Compiler la bibliothèque
