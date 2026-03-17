@@ -33,6 +33,7 @@ fn main() {
         .clang_arg("-I/usr/include")
         .clang_arg("-I/usr/include/x86_64-linux-gnu")
         .clang_arg("-I/usr/lib/gcc/x86_64-linux-gnu/13/include")
+        .rustified_enum("CalcMode")
         .parse_callbacks(Box::new(bindgen::CargoCallbacks::new()))
         .generate()
         .expect("Unable to generate bindings");

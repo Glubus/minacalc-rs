@@ -1,5 +1,5 @@
 use minacalc_rs::{
-    calc_all_rates, calc_at_rate, create_calc, destroy_calc, NoteInfo,
+    calc_all_rates, calc_at_rate, create_calc, destroy_calc, CalcMode, NoteInfo,
 };
 
 fn main() {
@@ -18,10 +18,10 @@ fn main() {
             calc,
             notes.as_ptr() as *mut _,
             notes.len(),
-            1.0,  // music rate
-            0.93, // score goal
-            4,    // key count
-            1,    // 1 = SSR (capped), 0 = MSD (raw)
+            1.0,              // music rate
+            0.93,             // score goal
+            4,                // key count
+            CalcMode::CALC_MODE_SSR,
         );
         println!("SSR overall: {:.2}", ssr.overall);
         println!("  stream:    {:.2}", ssr.stream);
@@ -32,8 +32,8 @@ fn main() {
             calc,
             notes.as_ptr() as *mut _,
             notes.len(),
-            4,    // key count
-            0,    // 0 = MSD
+            4,                // key count
+            CalcMode::CALC_MODE_MSD,
         );
         for (i, msd) in all.msds.iter().enumerate() {
             let rate = 0.7 + i as f32 * 0.1;
