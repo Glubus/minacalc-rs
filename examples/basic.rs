@@ -21,7 +21,7 @@ fn main() {
             1.0,              // music rate
             0.93,             // score goal
             4,                // key count
-            CalcMode::CALC_MODE_SSR,
+            CalcMode::SSR,
         );
         println!("SSR overall: {:.2}", ssr.overall);
         println!("  stream:    {:.2}", ssr.stream);
@@ -33,7 +33,7 @@ fn main() {
             notes.as_ptr() as *mut _,
             notes.len(),
             4,                // key count
-            CalcMode::CALC_MODE_MSD,
+            CalcMode::MSD,
         );
         for (i, msd) in all.msds.iter().enumerate() {
             let rate = 0.7 + i as f32 * 0.1;

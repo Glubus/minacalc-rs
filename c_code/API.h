@@ -24,10 +24,14 @@ typedef struct MsdForAllRates {
 	Ssr msds[14];
 } MsdForAllRates;
 
-typedef enum CalcMode {
-	CALC_MODE_MSD = 0, // uncapped, raw difficulty
-	CALC_MODE_SSR = 1, // capped, rated (score goal applies)
-} CalcMode;
+enum class CalcMode {
+	MSD = 0, // uncapped, raw difficulty
+	SSR = 1, // capped, rated (score goal applies)
+};
+
+#ifdef __cplusplus
+extern "C" {
+#endif
 
 int calc_version();
 
@@ -41,3 +45,7 @@ MsdForAllRates calc_all_rates(CalcHandle *calc, const NoteInfo *rows, size_t num
 // Calculates difficulty at a specific rate
 // score_goal: relevant for SSR (usually 0.93), ignored for MSD
 Ssr calc_at_rate(CalcHandle *calc, NoteInfo *rows, size_t num_rows, float music_rate, float score_goal, unsigned int keycount, CalcMode mode);
+
+#ifdef __cplusplus
+}
+#endif

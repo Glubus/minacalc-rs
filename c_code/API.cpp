@@ -42,7 +42,7 @@ extern "C" {
 		auto msd_vectors = MinaSDCalc(
 			note_info,
 			keycount,
-			mode == CALC_MODE_SSR,
+			mode == CalcMode::SSR,
 			reinterpret_cast<Calc*>(calc)
 		);
 
@@ -62,7 +62,7 @@ extern "C" {
 			music_rate,
 			score_goal,
 			keycount,
-			mode == CALC_MODE_SSR,
+			mode == CalcMode::SSR,
 			reinterpret_cast<Calc*>(calc)
 		);
 

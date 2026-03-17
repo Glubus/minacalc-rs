@@ -30,6 +30,8 @@ fn main() {
     // Générer les bindings FFI
     let bindings = bindgen::Builder::default()
         .header("c_code/API.h")
+        .clang_arg("-x").clang_arg("c++")
+        .clang_arg("-std=c++20")
         .clang_arg("-I/usr/include")
         .clang_arg("-I/usr/include/x86_64-linux-gnu")
         .clang_arg("-I/usr/lib/gcc/x86_64-linux-gnu/13/include")
