@@ -1,12 +1,16 @@
-use minacalc_sys::{
-    calc_all_rates, calc_at_rate, create_calc, destroy_calc, CalcMode, NoteInfo,
-};
+use minacalc_sys::{calc_all_rates, calc_at_rate, create_calc, destroy_calc, CalcMode, NoteInfo};
 
 fn main() {
     // Two notes: column 1 at t=0s, column 2 at t=0.5s
     let notes = vec![
-        NoteInfo { notes: 1, rowTime: 0.0 },
-        NoteInfo { notes: 2, rowTime: 0.5 },
+        NoteInfo {
+            notes: 1,
+            rowTime: 0.0,
+        },
+        NoteInfo {
+            notes: 2,
+            rowTime: 0.5,
+        },
     ];
 
     unsafe {
@@ -18,9 +22,9 @@ fn main() {
             calc,
             notes.as_ptr() as *mut _,
             notes.len(),
-            1.0,              // music rate
-            0.93,             // score goal
-            4,                // key count
+            1.0,  // music rate
+            0.93, // score goal
+            4,    // key count
             CalcMode::SSR,
         );
         println!("SSR overall: {:.2}", ssr.overall);
@@ -32,7 +36,7 @@ fn main() {
             calc,
             notes.as_ptr() as *mut _,
             notes.len(),
-            4,                // key count
+            4, // key count
             CalcMode::MSD,
         );
         for (i, msd) in all.msds.iter().enumerate() {

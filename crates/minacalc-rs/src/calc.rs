@@ -2,7 +2,7 @@ use crate::error::Error;
 use crate::types::{AllRates, CalcMode, Note, SkillsetScores};
 use minacalc_sys::CalcHandle;
 
-/// Safe RAII wrapper around the MinaCalc calculator.
+/// Safe RAII wrapper around the `MinaCalc` calculator.
 ///
 /// Not `Send` — the underlying C++ `Calc` is not thread-safe.
 /// Instantiate one per thread.
@@ -11,6 +11,8 @@ pub struct Calc {
 }
 
 impl Calc {
+    /// # Errors
+    /// Returns [`Error::AllocationFailed`] if the C++ allocator returns null.
     pub fn new() -> Result<Self, Error> {
         let handle = unsafe { minacalc_sys::create_calc() };
         if handle.is_null() {
@@ -19,6 +21,7 @@ impl Calc {
         Ok(Self { handle })
     }
 
+    #[must_use]
     pub fn version() -> i32 {
         unsafe { minacalc_sys::calc_version() }
     }
@@ -27,9 +30,12 @@ impl Calc {
     ///
     /// - `notes`: rows of note data
     /// - `rate`: music rate (e.g. 1.0 for 1x)
-    /// - `goal`: score goal, only relevant for `CalcMode::Ssr` (typically 0.93)
+    /// - `goal`: score goal, only relevant for [`CalcMode::Ssr`] (typically 0.93)
     /// - `keys`: key count (4, 6, or 7)
-    /// - `mode`: `Msd` for raw difficulty, `Ssr` for score-relative
+    /// - `mode`: [`CalcMode::Msd`] for raw difficulty, [`CalcMode::Ssr`] for score-relative
+    ///
+    /// # Errors
+    /// Returns [`Error::EmptyNotes`] if `notes` is empty.
     pub fn calc_at_rate(
         &self,
         notes: &[Note],
@@ -57,6 +63,9 @@ impl Calc {
     }
 
     /// Calculate difficulty for all rates (0.7x to 2.0x).
+    ///
+    /// # Errors
+    /// Returns [`Error::EmptyNotes`] if `notes` is empty.
     pub fn calc_all_rates(
         &self,
         notes: &[Note],
@@ -68,13 +77,7 @@ impl Calc {
         }
         let raw: Vec<minacalc_sys::NoteInfo> = notes.iter().map(|&n| n.into()).collect();
         let result = unsafe {
-            minacalc_sys::calc_all_rates(
-                self.handle,
-                raw.as_ptr(),
-                raw.len(),
-                keys,
-                mode.into(),
-            )
+            minacalc_sys::calc_all_rates(self.handle, raw.as_ptr(), raw.len(), keys, mode.into())
         };
         Ok(result.into())
     }
