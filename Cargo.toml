@@ -1,22 +1,5 @@
-[package]
-name = "minacalc-rs"
-version = "515.0.0"
-edition = "2021"
-description = "Raw Rust bindings for MinaCalc C++ library (Etterna rating calculator v515)"
-license = "MIT"
-authors = ["Glubus <mael.chevalleraud@gmail.com>"]
-repository = "https://github.com/Glubus/minacalc-rs"
-keywords = ["rhythm-game", "difficulty", "stepmania", "etterna", "minacalc"]
-categories = ["game-development", "external-ffi-bindings"]
-
-[lib]
-name = "minacalc_rs"
-crate-type = ["lib"]
-
-[[example]]
-name = "basic"
-path = "examples/basic.rs"
-
-[build-dependencies]
-cc = "1.0"
-bindgen = "0.72"
+[workspace]
+members = [
+    "minacalc-sys",
+]
+resolver = "2"

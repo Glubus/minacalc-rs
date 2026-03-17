@@ -1,4 +1,4 @@
-use minacalc_rs::{
+use minacalc_sys::{
     calc_all_rates, calc_at_rate, create_calc, destroy_calc, CalcMode, NoteInfo,
 };
 
