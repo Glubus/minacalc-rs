@@ -1,5 +1,6 @@
 [workspace]
 members = [
     "crates/minacalc-sys",
+    "crates/minacalc-rs",
 ]
 resolver = "2"

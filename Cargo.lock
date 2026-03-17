@@ -129,6 +129,13 @@ source = "registry+https://github.com/rust-lang/crates.io-index"
 checksum = "32a282da65faaf38286cf3be983213fcf1d2e2a58700e808f83f4ea9a4804bc0"
 
 [[package]]
+name = "minacalc-rs"
+version = "515.0.0"
+dependencies = [
+ "minacalc-sys",
+]
+
+[[package]]
 name = "minacalc-sys"
 version = "515.0.0"
 dependencies = [

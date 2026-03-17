@@ -1,0 +1,13 @@
+[package]
+name = "minacalc-rs"
+version = "515.0.0"
+edition = "2021"
+description = "Safe Rust wrapper for MinaCalc (Etterna difficulty calculator v515)"
+license = "MIT"
+authors = ["Glubus <mael.chevalleraud@gmail.com>"]
+repository = "https://github.com/Glubus/minacalc-rs"
+keywords = ["rhythm-game", "difficulty", "etterna", "minacalc"]
+categories = ["game-development"]
+
+[dependencies]
+minacalc-sys = { path = "../minacalc-sys", version = "515.0.0" }
