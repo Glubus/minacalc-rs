@@ -9,5 +9,17 @@ repository = "https://github.com/Glubus/minacalc-rs"
 keywords = ["rhythm-game", "difficulty", "etterna", "minacalc"]
 categories = ["game-development"]
 
+[[example]]
+name = "single_rate"
+path = "examples/single_rate.rs"
+
+[[example]]
+name = "all_rates"
+path = "examples/all_rates.rs"
+
+[[example]]
+name = "multithread"
+path = "examples/multithread.rs"
+
 [dependencies]
 minacalc-sys = { path = "../minacalc-sys", version = "515.0.0" }
