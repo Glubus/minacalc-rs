@@ -1,6 +1,6 @@
 [package]
 name = "minacalc-rs"
-version = "515.1.0"
+version = "515.1.1"
 edition = "2021"
 description = "Safe Rust wrapper for MinaCalc (Etterna difficulty calculator v515)"
 license = "MIT"
