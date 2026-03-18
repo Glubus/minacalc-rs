@@ -25,7 +25,7 @@ path = "examples/multithread.rs"
 minacalc-sys = { version = "515.1" }
 
 [dev-dependencies]
-criterion = { version = "0.5", features = ["html_reports"] }
+criterion = { version = "0.8.2", features = ["html_reports"] }
 
 [[bench]]
 name = "calc"
