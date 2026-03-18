@@ -1,6 +1,6 @@
 [package]
 name = "minacalc-sys"
-version = "515.1.0"
+version = "515.1.1"
 edition = "2021"
 description = "Raw Rust bindings for MinaCalc C++ library (Etterna rating calculator v515)"
 license = "MIT"
