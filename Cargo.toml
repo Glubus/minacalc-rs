@@ -1,57 +1,6 @@
-[package]
-name = "minacalc-rs"
-version = "0.4.2"
-edition = "2021"
-description = "Rust bindings for MinaCalc C++ library (Etterna rating calculator)"
-license = "MIT"
-authors = ["Glubus <mael.chevalleraud@gmail.com>"]
-repository = "https://github.com/Glubus/minacalc-rs"
-keywords = ["rhythm-game", "difficulty", "stepmania", "etterna", "minacalc"]
-categories = ["game-development"]
-
-[lib]
-name = "minacalc_rs"
-crate-type = ["cdylib", "rlib"]
-
-[features]
-default = ["hashmap"]
-thread = []
-hashmap = []
-rox = []
-utils = []
-api = ["rox"]
-
-[dependencies]
-rhythm-open-exchange = "0.4.0"
-log = "0.4"
-env_logger = "0.11"
-
-[build-dependencies]
-cc = "1.0"
-bindgen = "0.72"
-
-[dev-dependencies]
-
-[[example]]
-name = "basic_usage"
-path = "examples/basic_usage.rs"
-
-[[example]]
-name = "rox"
-path = "examples/rox.rs"
-required-features = ["rox", "hashmap"]
-
-[[example]]
-name = "utils_example"
-path = "examples/utils_example.rs"
-required-features = ["utils"]
-
-[[bin]]
-name = "msd"
-path = "src/bin/msd.rs"
-required-features = ["rox"]
-
-[[example]]
-name = "multithread"
-path = "examples/multithread.rs"
-required-features = ["thread", "rox"]
+[workspace]
+members = [
+    "crates/minacalc-sys",
+    "crates/minacalc-rs",
+]
+resolver = "2"
