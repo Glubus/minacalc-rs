@@ -1,29 +1,47 @@
-# MinaCalc language bindings
+# MinaCalc bindings
 
-All bindings call the `minacalc-bindings` Rust crate through its stable C ABI;
-they do not link to MinaCalc's C++ sources or call repository code directly.
+Official multi-language bindings for the MinaCalc v515 difficulty calculator.
+Every package calls the `minacalc-bindings` Rust crate through the stable C ABI
+in [`include/minacalc.h`](include/minacalc.h). They never use the C++ source
+tree directly.
 
-## Build the native library
+## Build and locate the native library
 
 ```sh
 cargo build --release -p minacalc-bindings
 ```
 
-The resulting library is named `libminacalc_bindings.so` on Linux,
-`libminacalc_bindings.dylib` on macOS, and `minacalc_bindings.dll` on Windows.
-Set `MINACALC_LIBRARY_PATH` to its absolute path before using a binding, or
-install it through the platform's normal dynamic-library mechanism.
+| Platform | Output |
+| --- | --- |
+| Linux | `target/release/libminacalc_bindings.so` |
+| macOS | `target/release/libminacalc_bindings.dylib` |
+| Windows | `target/release/minacalc_bindings.dll` |
 
-`include/minacalc.h` is the versioned ABI contract. It exposes two operations:
-single-rate calculation and calculation for the fourteen rates from 0.7x to
-2.0x. Inputs are deliberately plain note rows: `{ notes: bitmask, row_time: seconds }`.
+Set `MINACALC_LIBRARY_PATH` to this file's absolute path. Go and .NET can also
+use their platform's normal linker and dynamic-loader search paths.
 
-## Layout
+## Chart input: bitmasks
 
-- `typescript/`: Node.js, Bun, and Deno TypeScript entry points.
-- `python/`: a typed Python package using `ctypes` from the standard library.
-- `csharp/`: a .NET library based on source-generated P/Invoke.
-- `go/`: a Go package using cgo and the shared ABI header.
+Each row has an absolute time in seconds and a `u32` bitmask of active columns.
+Columns are zero-based: in 4K, `1` is left, `2` is down, `4` is up, and `8` is
+right. Combine bits for chords: `5` (`0b0101`) is a left+up jump.
 
-Every wrapper validates its own obvious inputs and turns non-zero native status
-codes into a language-native error.
+```text
+time  bitmask  meaning
+0.00  1        left
+0.20  2        down
+0.40  5        left + up jump
+```
+
+Rows must be non-empty and ordered by time. MinaCalc supports 4K, 6K, and 7K.
+
+## Available bindings
+
+- [`typescript/`](typescript/README.md): Node.js, Bun, and Deno.
+- [`python/`](python/README.md): Python 3.9+ with no third-party runtime dependency.
+- [`csharp/`](csharp/README.md): .NET 8+.
+- [`go/`](go/README.md): Go 1.22+ with cgo.
+
+All wrappers expose `calc_at_rate`/`CalcAtRate` and
+`calc_all_rates`/`CalcAllRates`. The latter returns fourteen scores for rates
+0.7x through 2.0x, in 0.1x steps.
