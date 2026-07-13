@@ -1,0 +1,16 @@
+{
+  "name": "@minacalc/bindings",
+  "version": "0.1.0",
+  "private": true,
+  "description": "TypeScript bindings for MinaCalc: Node.js, Bun, and Deno",
+  "type": "module",
+  "exports": {
+    "./node": "./src/node.ts",
+    "./bun": "./src/bun.ts",
+    "./deno": "./src/deno.ts"
+  },
+  "engines": { "node": ">=20" },
+  "peerDependencies": { "koffi": "latest" },
+  "devDependencies": { "@types/node": "latest", "typescript": "latest" },
+  "scripts": { "check": "tsc --noEmit" }
+}

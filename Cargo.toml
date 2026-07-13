@@ -2,5 +2,6 @@
 members = [
     "crates/minacalc-sys",
     "crates/minacalc-rs",
+    "crates/minacalc-bindings",
 ]
 resolver = "2"

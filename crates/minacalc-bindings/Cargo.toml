@@ -1,0 +1,16 @@
+[package]
+name = "minacalc-bindings"
+version = "515.1.1"
+edition = "2021"
+description = "Stable C ABI for MinaCalc language bindings"
+license = "MIT"
+authors = ["Glubus <mael.chevalleraud@gmail.com>"]
+repository = "https://github.com/Glubus/minacalc-rs"
+keywords = ["rhythm-game", "difficulty", "etterna", "ffi"]
+categories = ["api-bindings", "game-development"]
+
+[lib]
+crate-type = ["cdylib", "staticlib", "rlib"]
+
+[dependencies]
+minacalc-rs = { path = "../minacalc-rs" }

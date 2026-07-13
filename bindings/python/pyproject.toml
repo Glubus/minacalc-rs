@@ -1,0 +1,15 @@
+[build-system]
+requires = ["hatchling>=1.27"]
+build-backend = "hatchling.build"
+
+[project]
+name = "minacalc"
+version = "0.1.0"
+description = "Python bindings for MinaCalc's stable Rust C ABI"
+readme = "README.md"
+requires-python = ">=3.9"
+license = { text = "MIT" }
+classifiers = ["Programming Language :: Python :: 3", "Typing :: Typed"]
+
+[tool.hatch.build.targets.wheel]
+packages = ["src/minacalc"]
