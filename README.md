@@ -165,8 +165,8 @@ just test
 ```
 
 This never writes into the vendored source directory. A patch conflict fails the
-build and identifies the patch that must be rebased. Details are in
-[`patches/README.md`](patches/README.md).
+build and identifies the patch that must be rebased. See the
+[`minacalc-sys` documentation](crates/minacalc-sys/README.md) for details.
 
 ## License
 
