@@ -46,60 +46,7 @@ button { color: inherit; }
 .shell {
   width: min(1200px, calc(100% - 40px));
   margin: 0 auto;
-  padding-bottom: 80px;
-}
-
-.topbar {
-  display: flex;
-  align-items: center;
-  justify-content: space-between;
-  height: 82px;
-  border-bottom: 1px solid #ffffff0a;
-}
-
-.brand {
-  display: flex;
-  align-items: center;
-  gap: 11px;
-  color: var(--text);
-  font-weight: 760;
-  letter-spacing: -.02em;
-  text-decoration: none;
-}
-
-.brand-mark {
-  display: grid;
-  width: 34px;
-  height: 34px;
-  place-items: center;
-  border-radius: 10px;
-  background: var(--accent);
-  color: #0b1207;
-  font-weight: 900;
-  box-shadow: 0 0 30px #a9ff6833;
-}
-
-.engine-status {
-  display: flex;
-  align-items: center;
-  gap: 8px;
-  color: var(--muted);
-  font-size: .78rem;
-  letter-spacing: .04em;
-  text-transform: uppercase;
-}
-
-.engine-status span {
-  width: 7px;
-  height: 7px;
-  border-radius: 50%;
-  background: var(--accent);
-  box-shadow: 0 0 10px var(--accent);
-}
-
-.intro {
-  max-width: 760px;
-  margin: 88px 0 40px;
+  padding: 48px 0 80px;
 }
 
 .eyebrow {
@@ -109,28 +56,6 @@ button { color: inherit; }
   font-weight: 800;
   letter-spacing: .15em;
   text-transform: uppercase;
-}
-
-.intro h1 {
-  margin: 0;
-  font-size: clamp(3rem, 7vw, 6.2rem);
-  font-weight: 720;
-  line-height: .93;
-  letter-spacing: -.07em;
-}
-
-.intro h1 em {
-  color: var(--muted);
-  font-style: normal;
-  font-weight: 430;
-}
-
-.intro > p:last-child {
-  max-width: 650px;
-  margin: 27px 0 0;
-  color: var(--muted);
-  font-size: 1.05rem;
-  line-height: 1.65;
 }
 
 .search-card {
@@ -540,17 +465,13 @@ tbody tr:hover, tbody tr.selected { background: #a9ff6809; }
 [hidden] { display: none !important; }
 
 @media (max-width: 900px) {
-  .intro { margin-top: 60px; }
   .dashboard-grid { grid-template-columns: 1fr; }
   .loading-grid { grid-template-columns: 1fr; }
 }
 
 @media (max-width: 680px) {
   .shell { width: min(100% - 24px, 1200px); }
-  .topbar { height: 68px; }
-  .engine-status { display: none; }
-  .intro { margin: 46px 4px 28px; }
-  .intro h1 { font-size: clamp(2.75rem, 15vw, 4.5rem); }
+  .shell { padding-top: 24px; }
   .search-card { grid-template-columns: 1fr 1fr; }
   .url-field { grid-column: 1 / -1; min-height: 50px; }
   .primary-button, .secondary-button { padding: 0 14px; }

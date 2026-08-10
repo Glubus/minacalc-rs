@@ -202,10 +202,7 @@ function updateFilterCount() {
 }
 
 function closeOnBackdrop(event) {
-  const bounds = filtersDialog.getBoundingClientRect();
-  const inside = event.clientX >= bounds.left && event.clientX <= bounds.right
-    && event.clientY >= bounds.top && event.clientY <= bounds.bottom;
-  if (!inside) filtersDialog.close();
+  if (event.target === filtersDialog) filtersDialog.close();
 }
 
 function deltaClass(delta) {
