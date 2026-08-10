@@ -1,4 +1,4 @@
-use minacalc_rs::{Calc, CalcConfig};
+use minacalc_rs::Calc;
 use rhythm_open_exchange::from_bytes;
 
 use crate::{
@@ -13,11 +13,7 @@ pub(crate) fn rate(request: RatingRequest) -> Result<RatingResponse, ApiError> {
     })?;
     let notes = chart_to_notes(&chart).map_err(|error| ApiError::bad_request(error.to_string()))?;
 
-    let config = CalcConfig {
-        default_score_goal: request.score_goal,
-        ..CalcConfig::default()
-    };
-    let calc = Calc::with_config(config)
+    let calc = Calc::with_config(request.config)
         .map_err(|error| ApiError::internal(format!("could not create MinaCalc: {error}")))?;
     let scores = calc
         .calc_rates(
@@ -43,11 +39,17 @@ pub(crate) fn rate(request: RatingRequest) -> Result<RatingResponse, ApiError> {
         title: chart.metadata.title.to_string(),
         artist: chart.metadata.artist.to_string(),
         difficulty: chart.metadata.difficulty_name.to_string(),
+        creator: chart.metadata.creator.to_string(),
+        cover_url: chart
+            .metadata
+            .chartset_id
+            .map(|id| format!("https://assets.ppy.sh/beatmaps/{id}/covers/cover@2x.jpg")),
         key_count: chart.key_count(),
+        duration_seconds: chart.duration_us() as f32 / 1_000_000.0,
         source_note_count: chart.notes.len(),
         row_count: notes.len(),
         mode: request.mode.as_str(),
-        score_goal: request.score_goal,
+        score_goal: request.config.default_score_goal,
         results,
     })
 }

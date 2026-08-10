@@ -136,7 +136,9 @@ service rather than an isolated snippet. It:
 - calculates any caller-supplied list of music rates in MSD or SSR mode;
 - runs parsing and MinaCalc on Tokio's blocking pool because `Calc` is not
   `Send` or `Sync`;
-- serves a small browser interface at `http://127.0.0.1:3000/` for testing.
+- serves a polished browser interface at `http://127.0.0.1:3000/` with the
+  complete calculator configuration, chart artwork, an interactive skillset
+  radar, rate progression graph, deltas, and a full results table.
 
 Run it from the workspace root:
 

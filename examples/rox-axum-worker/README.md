@@ -13,8 +13,11 @@ From the repository root:
 cargo run -p rox-minacalc-worker --release
 ```
 
-Then open <http://127.0.0.1:3000/>. The server accepts uploads up to 16 MiB and
-at most 64 rates per request.
+Then open <http://127.0.0.1:3000/>. The browser UI accepts an osu! URL, exposes
+the complete calculator configuration in its Filters dialog, and renders the
+chart cover, an interactive skillset radar, a rate progression graph, deltas
+against 1.00x, and the complete rating table. The server accepts uploads up to
+16 MiB and at most 64 rates per request.
 
 ## API
 
@@ -27,6 +30,11 @@ at most 64 rates per request.
 | `rates` | no | Comma-separated positive rates; defaults to `1.0` |
 | `mode` | no | `msd` or `ssr`; defaults to `msd` |
 | `score_goal` | no | SSR goal from `0.0` to `1.0`; defaults to `0.93` |
+| `ssr_goal_cap` | no | Maximum SSR goal; defaults to `0.965` |
+| `low_acc_cutoff` | no | Low-accuracy scaling threshold; defaults to `0.90` |
+| `ssr_rating_cap` | no | Positive cap, or empty/`none` to disable it |
+| `grind_scaling` | no | `true` or `false`; defaults to `true` |
+| `scaler_*` | no | Positive Stream, Jumpstream, Handstream, Stamina, Jackspeed, Chordjack, and Technical multipliers |
 
 ```sh
 curl http://127.0.0.1:3000/api/rate \
@@ -102,10 +110,14 @@ are excluded from playable rows.
 | File | Responsibility |
 | --- | --- |
 | `src/web.rs` | Axum router and static asset responses |
-| `src/api.rs` | Multipart request parsing and `/api/rate` handler |
+| `src/api.rs` | `/api/rate` handler and blocking-worker dispatch |
+| `src/request.rs` | Multipart fields and validated `CalcConfig` construction |
 | `src/osu.rs` | Restricted osu! URL parsing and `.osu` download |
 | `src/calculator.rs` | ROX parsing and MinaCalc invocation |
 | `src/conversion.rs` | `RoxChart` to MinaCalc row conversion |
 | `src/models.rs` | Request and JSON response types |
 | `src/error.rs` | HTTP and conversion errors |
-| `static/` | Separate HTML, CSS, and JavaScript assets |
+| `static/index.html` | Semantic page structure and Filters dialog |
+| `static/styles.css` | Responsive visual design |
+| `static/app.js` | Request flow, results and interactions |
+| `static/charts.js` | Dependency-free SVG radar and progression charts |

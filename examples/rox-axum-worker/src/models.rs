@@ -1,6 +1,6 @@
 use std::str::FromStr;
 
-use minacalc_rs::{CalcMode, SkillsetScores};
+use minacalc_rs::{CalcConfig, CalcMode, SkillsetScores};
 use serde::Serialize;
 
 use crate::error::ApiError;
@@ -19,7 +19,7 @@ pub(crate) struct RatingRequest {
     pub(crate) chart: ChartPayload,
     pub(crate) rates: Vec<f32>,
     pub(crate) mode: RatingMode,
-    pub(crate) score_goal: f32,
+    pub(crate) config: CalcConfig,
 }
 
 #[derive(Debug, Clone, Copy)]
@@ -69,7 +69,10 @@ pub(crate) struct RatingResponse {
     pub(crate) title: String,
     pub(crate) artist: String,
     pub(crate) difficulty: String,
+    pub(crate) creator: String,
+    pub(crate) cover_url: Option<String>,
     pub(crate) key_count: u8,
+    pub(crate) duration_seconds: f32,
     pub(crate) source_note_count: usize,
     pub(crate) row_count: usize,
     pub(crate) mode: &'static str,

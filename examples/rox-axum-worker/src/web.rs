@@ -11,6 +11,7 @@ use crate::{api, models::AppState};
 const MAX_UPLOAD_BYTES: usize = 16 * 1024 * 1024;
 const INDEX_HTML: &str = include_str!("../static/index.html");
 const APP_JS: &str = include_str!("../static/app.js");
+const CHARTS_JS: &str = include_str!("../static/charts.js");
 const STYLES_CSS: &str = include_str!("../static/styles.css");
 
 /// Builds the Axum application used by the example binary.
@@ -23,6 +24,7 @@ pub fn app() -> Router {
     Router::new()
         .route("/", get(index))
         .route("/app.js", get(javascript))
+        .route("/charts.js", get(charts_javascript))
         .route("/styles.css", get(stylesheet))
         .route("/api/health", get(api::health))
         .route("/api/rate", post(api::rate_chart))
@@ -38,6 +40,13 @@ async fn javascript() -> impl IntoResponse {
     (
         [(header::CONTENT_TYPE, "text/javascript; charset=utf-8")],
         APP_JS,
+    )
+}
+
+async fn charts_javascript() -> impl IntoResponse {
+    (
+        [(header::CONTENT_TYPE, "text/javascript; charset=utf-8")],
+        CHARTS_JS,
     )
 }
 

@@ -3,63 +3,193 @@
 <head>
   <meta charset="utf-8">
   <meta name="viewport" content="width=device-width, initial-scale=1">
-  <title>ROX + MinaCalc</title>
+  <meta name="theme-color" content="#080b12">
+  <title>MinaScope — chart ratings</title>
+  <link rel="icon" href="data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 32 32'%3E%3Crect width='32' height='32' rx='9' fill='%23a9ff68'/%3E%3Ctext x='16' y='22' text-anchor='middle' font-family='sans-serif' font-weight='900' font-size='18' fill='%230b1207'%3EM%3C/text%3E%3C/svg%3E">
   <link rel="stylesheet" href="/styles.css">
-  <script src="/app.js" defer></script>
+  <script type="module" src="/app.js"></script>
 </head>
 <body>
-  <main>
-    <header>
-      <h1>ROX + MinaCalc</h1>
-      <p>Paste an osu! beatmap URL or upload a VSRG chart, then calculate custom rates.</p>
-    </header>
+  <div class="ambient ambient-one"></div>
+  <div class="ambient ambient-two"></div>
 
-    <section class="panel">
-      <form id="rating-form">
-        <label class="wide">osu! beatmap URL
-          <input
-            name="osu_url"
-            type="url"
-            placeholder="https://osu.ppy.sh/beatmapsets/1856758#mania/3816042"
-          >
-        </label>
+  <main class="shell">
+    <nav class="topbar">
+      <a class="brand" href="/" aria-label="MinaScope home">
+        <span class="brand-mark" aria-hidden="true">M</span>
+        <span>MinaScope</span>
+      </a>
+      <div class="engine-status"><span></span>MinaCalc v515 · ROX</div>
+    </nav>
 
-        <div class="separator"><span>or upload a file</span></div>
+    <section class="intro">
+      <p class="eyebrow">Chart intelligence</p>
+      <h1>See what a chart is<br><em>really asking.</em></h1>
+      <p>Paste an osu!mania difficulty URL. MinaScope parses it with ROX and compares every requested music rate with MinaCalc.</p>
+    </section>
 
-        <label class="wide">Chart file
-          <input name="chart" type="file" accept=".osu,.sm,.qua,.rox,.jrox,.yrox,.json,.yaml,.yml">
-        </label>
-        <label>Rates (comma-separated)
-          <input name="rates" value="0.85, 1.0, 1.25, 1.5" required>
-        </label>
-        <label>Mode
-          <select name="mode">
-            <option value="msd">MSD — raw difficulty</option>
-            <option value="ssr">SSR — score-relative</option>
-          </select>
-        </label>
-        <label>SSR score goal
-          <input name="score_goal" type="number" min="0" max="1" step="0.001" value="0.93">
-        </label>
-        <button type="submit">Rate chart</button>
-      </form>
+    <form id="rating-form" class="search-card">
+      <label class="url-field" for="osu-url">
+        <svg viewBox="0 0 24 24" aria-hidden="true"><path d="M10 13a5 5 0 0 0 7.1.1l2-2a5 5 0 0 0-7.1-7.1l-1.1 1.1m3.1 5.9a5 5 0 0 0-7.1-.1l-2 2A5 5 0 0 0 12 20l1.1-1.1"/></svg>
+        <input
+          id="osu-url"
+          name="osu_url"
+          type="url"
+          autocomplete="url"
+          placeholder="https://osu.ppy.sh/beatmapsets/1856758#mania/3816042"
+          required
+        >
+      </label>
+      <button id="open-filters" class="secondary-button" type="button" aria-haspopup="dialog">
+        <svg viewBox="0 0 24 24" aria-hidden="true"><path d="M4 7h10M18 7h2M14 5v4M4 17h2M10 17h10M6 15v4M4 12h4M12 12h8M8 10v4"/></svg>
+        Filters
+        <span id="filter-count" class="filter-count" hidden>0</span>
+      </button>
+      <button id="rate-button" class="primary-button" type="submit">
+        <span>Rate chart</span>
+        <svg viewBox="0 0 24 24" aria-hidden="true"><path d="m9 18 6-6-6-6"/></svg>
+      </button>
 
-      <p id="status" role="status"></p>
-      <div id="results" hidden>
-        <p id="summary"></p>
+      <dialog id="filters-dialog" class="filters-dialog">
+        <div class="dialog-heading">
+          <div>
+            <p class="eyebrow">Calculation setup</p>
+            <h2>Filters & balancing</h2>
+          </div>
+          <button id="close-filters" class="icon-button" type="button" aria-label="Close filters">×</button>
+        </div>
+
+        <div class="filter-sections">
+          <fieldset>
+            <legend>Calculation</legend>
+            <div class="field-grid">
+              <label class="span-two">Music rates
+                <input name="rates" value="0.80, 0.90, 1.00, 1.10, 1.20, 1.30, 1.40, 1.50" required>
+                <small>Comma-separated, up to 64 values.</small>
+              </label>
+              <label>Mode
+                <select name="mode">
+                  <option value="msd">MSD · raw difficulty</option>
+                  <option value="ssr">SSR · score-relative</option>
+                </select>
+              </label>
+              <label>SSR score goal
+                <input name="score_goal" type="number" min="0" max="1" step="0.001" value="0.93">
+              </label>
+            </div>
+          </fieldset>
+
+          <fieldset>
+            <legend>Rating behavior</legend>
+            <div class="field-grid">
+              <label>SSR goal cap
+                <input name="ssr_goal_cap" type="number" min="0" max="1" step="0.001" value="0.965">
+              </label>
+              <label>Low accuracy cutoff
+                <input name="low_acc_cutoff" type="number" min="0" max="1" step="0.001" value="0.90">
+              </label>
+              <label>SSR rating cap
+                <input name="ssr_rating_cap" type="number" min="0.1" step="0.1" value="40">
+                <small>Leave empty to disable the cap.</small>
+              </label>
+              <label>Grind scaling
+                <select name="grind_scaling">
+                  <option value="true">Enabled</option>
+                  <option value="false">Disabled</option>
+                </select>
+              </label>
+            </div>
+          </fieldset>
+
+          <fieldset>
+            <legend>Skillset multipliers</legend>
+            <div class="scaler-grid">
+              <label>Stream<input name="scaler_stream" type="number" min="0.01" step="0.01" value="1.00"></label>
+              <label>Jumpstream<input name="scaler_jumpstream" type="number" min="0.01" step="0.01" value="1.00"></label>
+              <label>Handstream<input name="scaler_handstream" type="number" min="0.01" step="0.01" value="1.00"></label>
+              <label>Stamina<input name="scaler_stamina" type="number" min="0.01" step="0.01" value="1.00"></label>
+              <label>Jackspeed<input name="scaler_jackspeed" type="number" min="0.01" step="0.01" value="1.00"></label>
+              <label>Chordjack<input name="scaler_chordjack" type="number" min="0.01" step="0.01" value="1.00"></label>
+              <label>Technical<input name="scaler_technical" type="number" min="0.01" step="0.01" value="1.00"></label>
+            </div>
+          </fieldset>
+        </div>
+
+        <div class="dialog-actions">
+          <button id="reset-filters" class="text-button" type="button">Reset defaults</button>
+          <button id="apply-filters" class="primary-button compact" type="button">Apply filters</button>
+        </div>
+      </dialog>
+    </form>
+
+    <p id="status" class="status" role="status">Ready for an osu!mania URL.</p>
+
+    <section id="loading" class="loading-state" hidden aria-label="Calculating chart">
+      <div class="loading-banner shimmer"></div>
+      <div class="loading-grid"><div class="shimmer"></div><div class="shimmer"></div></div>
+    </section>
+
+    <section id="results" class="results" hidden>
+      <article id="chart-hero" class="chart-hero">
+        <div class="cover-fallback"></div>
+        <div class="hero-overlay"></div>
+        <div class="hero-content">
+          <div class="hero-copy">
+            <div class="pills">
+              <span id="hero-keys" class="pill accent"></span>
+              <span id="hero-mode" class="pill"></span>
+              <span id="hero-duration" class="pill"></span>
+            </div>
+            <p id="hero-artist" class="hero-artist"></p>
+            <h2 id="hero-title"></h2>
+            <p id="hero-difficulty" class="hero-difficulty"></p>
+            <p id="hero-mapper" class="hero-mapper"></p>
+          </div>
+          <div class="overall-card">
+            <span id="selected-rate">1.00x</span>
+            <strong id="selected-overall">—</strong>
+            <small>Overall rating</small>
+          </div>
+        </div>
+      </article>
+
+      <div class="result-meta">
+        <span><strong id="meta-rows">—</strong> merged rows</span>
+        <span><strong id="meta-notes">—</strong> source notes</span>
+        <span><strong id="meta-goal">—</strong> score goal</span>
+      </div>
+
+      <div class="dashboard-grid">
+        <article class="data-card radar-card">
+          <header class="card-heading">
+            <div><p class="eyebrow">Skill profile</p><h3>Rating radar</h3></div>
+            <select id="radar-rate" aria-label="Rate displayed on radar"></select>
+          </header>
+          <div id="radar-chart" class="chart-container"></div>
+          <div id="skillset-values" class="skillset-values"></div>
+        </article>
+
+        <article class="data-card trend-card">
+          <header class="card-heading">
+            <div><p class="eyebrow">Rate comparison</p><h3>Overall progression</h3></div>
+            <div class="delta-summary"><span>vs 1.00x</span><strong id="selected-delta">—</strong></div>
+          </header>
+          <div id="trend-chart" class="chart-container"></div>
+          <p class="chart-note">Select any point to inspect its full skill profile.</p>
+        </article>
+      </div>
+
+      <article class="data-card ratings-table-card">
+        <header class="card-heading">
+          <div><p class="eyebrow">Complete output</p><h3>All skillsets</h3></div>
+        </header>
         <div class="table-wrap">
           <table>
-            <thead>
-              <tr>
-                <th>Rate</th><th>Overall</th><th>Stream</th><th>Jumpstream</th>
-                <th>Handstream</th><th>Stamina</th><th>Jackspeed</th>
-                <th>Chordjack</th><th>Technical</th>
-              </tr>
-            </thead>
-            <tbody id="ratings"></tbody>
+            <thead><tr><th>Rate</th><th>Overall</th><th>Δ 1.00x</th><th>Stream</th><th>Jumpstream</th><th>Handstream</th><th>Stamina</th><th>Jackspeed</th><th>Chordjack</th><th>Technical</th></tr></thead>
+            <tbody id="ratings-table"></tbody>
           </table>
         </div>
-      </div>
+      </article>
     </section>
   </main>
 </body>
