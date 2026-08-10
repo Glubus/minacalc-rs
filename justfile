@@ -53,3 +53,7 @@ release version:
 # Quick QA check only (no commit)
 qa:
     just check
+
+# Reapply minacalc-rs adaptations after updating the vendored MinaCalc sources
+patch-minacalc:
+    ./scripts/apply-minacalc-patches.sh

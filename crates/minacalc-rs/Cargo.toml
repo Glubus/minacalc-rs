@@ -22,7 +22,7 @@ name = "multithread"
 path = "examples/multithread.rs"
 
 [dependencies]
-minacalc-sys = { version = "515.1" }
+minacalc-sys = { version = "515.1", path = "../minacalc-sys" }
 
 [dev-dependencies]
 criterion = { version = "0.8.2", features = ["html_reports"] }
