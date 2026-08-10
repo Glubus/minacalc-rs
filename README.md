@@ -16,6 +16,7 @@ vendored and compiled as part of `minacalc-sys`.
 | [`crates/minacalc-sys`](crates/minacalc-sys) | Raw generated Rust/C++ FFI |
 | [`crates/minacalc-bindings`](crates/minacalc-bindings) | Stable C ABI for other languages |
 | [`bindings`](bindings) | TypeScript, Python, C#, and Go wrappers |
+| [`examples/rox-axum-worker`](examples/rox-axum-worker) | Axum map-rating API and browser demo powered by ROX |
 
 ## Requirements
 
@@ -122,6 +123,51 @@ the effective grind scaler alongside the scores.
 `Calc` is not `Send` or `Sync` because the underlying C++ instance is not
 thread-safe. Create one calculator per thread; see
 [`examples/multithread.rs`](crates/minacalc-rs/examples/multithread.rs).
+
+## Complete Axum + ROX worker
+
+The [`rox-axum-worker`](examples/rox-axum-worker) example is a complete HTTP
+service rather than an isolated snippet. It:
+
+- accepts an uploaded `.osu`, `.sm`, `.qua`, `.rox`, `.jrox`, or `.yrox` map,
+  or a public `osu.ppy.sh` beatmap URL;
+- parses it with [Rhythm Open Exchange](https://github.com/Glubus/rhythm-open-exchange);
+- merges simultaneous notes into MinaCalc row bitmasks and ignores mines;
+- calculates any caller-supplied list of music rates in MSD or SSR mode;
+- runs parsing and MinaCalc on Tokio's blocking pool because `Calc` is not
+  `Send` or `Sync`;
+- serves a small browser interface at `http://127.0.0.1:3000/` for testing.
+
+Run it from the workspace root:
+
+```sh
+cargo run -p rox-minacalc-worker --release
+```
+
+Open the browser page, or call the same API directly:
+
+```sh
+curl http://127.0.0.1:3000/api/rate \
+  -F 'chart=@chart.osu' \
+  -F 'rates=0.85,1.0,1.25,1.5' \
+  -F 'mode=msd'
+```
+
+An osu! beatmapset URL works too; the worker extracts the difficulty ID and
+downloads the corresponding `.osu` file from the official endpoint:
+
+```sh
+curl http://127.0.0.1:3000/api/rate \
+  -F 'osu_url=https://osu.ppy.sh/beatmapsets/1856758#mania/3816042' \
+  -F 'rates=1.0,1.1,1.2' \
+  -F 'mode=msd'
+```
+
+For SSR, pass `mode=ssr` and a score goal such as `score_goal=0.95`. Timestamps
+remain at their native values: MinaCalc receives each requested music rate
+separately, so pre-scaling them would apply the rate twice. See the example's
+[README](examples/rox-axum-worker/README.md) for the response schema and
+implementation notes.
 
 ## Other language bindings
 

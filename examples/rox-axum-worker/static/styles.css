@@ -1,0 +1,133 @@
+:root {
+  color-scheme: dark;
+  font-family: Inter, ui-sans-serif, system-ui, sans-serif;
+}
+
+* { box-sizing: border-box; }
+
+body {
+  margin: 0;
+  min-height: 100vh;
+  background: #0b1020;
+  color: #e8ecf8;
+}
+
+main {
+  width: min(1100px, calc(100% - 32px));
+  margin: 48px auto;
+}
+
+header { margin-bottom: 28px; }
+
+h1 {
+  margin: 0 0 8px;
+  font-size: clamp(2rem, 6vw, 3.5rem);
+  letter-spacing: -.05em;
+}
+
+header p { margin: 0; color: #aeb8d4; }
+
+.panel {
+  padding: 24px;
+  border: 1px solid #273252;
+  border-radius: 18px;
+  background: #11182b;
+  box-shadow: 0 24px 80px #0006;
+}
+
+form {
+  display: grid;
+  grid-template-columns: repeat(2, minmax(0, 1fr));
+  gap: 18px;
+}
+
+label {
+  display: grid;
+  gap: 8px;
+  color: #c9d2eb;
+  font-weight: 650;
+}
+
+.wide, .separator, button { grid-column: 1 / -1; }
+
+.separator {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+  color: #7885a8;
+  font-size: .85rem;
+  text-transform: uppercase;
+}
+
+.separator::before, .separator::after {
+  content: '';
+  height: 1px;
+  flex: 1;
+  background: #273252;
+}
+
+input, select, button {
+  width: 100%;
+  border: 1px solid #344164;
+  border-radius: 10px;
+  padding: 12px 14px;
+  background: #0b1122;
+  color: inherit;
+  font: inherit;
+}
+
+input[type=file] { padding: 10px; }
+
+button {
+  cursor: pointer;
+  border: 0;
+  background: #6d5dfc;
+  font-weight: 750;
+}
+
+button:hover { background: #8174ff; }
+button:disabled { cursor: wait; opacity: .6; }
+
+#status {
+  min-height: 24px;
+  margin: 18px 2px 0;
+  color: #aeb8d4;
+}
+
+#status.error { color: #ff8f9c; }
+#summary { margin: 22px 0 12px; color: #c9d2eb; }
+
+.table-wrap {
+  overflow-x: auto;
+  border: 1px solid #273252;
+  border-radius: 14px;
+}
+
+table {
+  width: 100%;
+  border-collapse: collapse;
+  font-variant-numeric: tabular-nums;
+}
+
+th, td {
+  padding: 11px 13px;
+  text-align: right;
+  border-bottom: 1px solid #222c49;
+  white-space: nowrap;
+}
+
+th:first-child, td:first-child { text-align: left; }
+
+th {
+  color: #9eacd0;
+  font-size: .8rem;
+  text-transform: uppercase;
+  letter-spacing: .05em;
+}
+
+tr:last-child td { border-bottom: 0; }
+
+@media (max-width: 680px) {
+  main { margin: 24px auto; }
+  form { grid-template-columns: 1fr; }
+}

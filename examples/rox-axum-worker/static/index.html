@@ -1,0 +1,66 @@
+<!doctype html>
+<html lang="en">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <title>ROX + MinaCalc</title>
+  <link rel="stylesheet" href="/styles.css">
+  <script src="/app.js" defer></script>
+</head>
+<body>
+  <main>
+    <header>
+      <h1>ROX + MinaCalc</h1>
+      <p>Paste an osu! beatmap URL or upload a VSRG chart, then calculate custom rates.</p>
+    </header>
+
+    <section class="panel">
+      <form id="rating-form">
+        <label class="wide">osu! beatmap URL
+          <input
+            name="osu_url"
+            type="url"
+            placeholder="https://osu.ppy.sh/beatmapsets/1856758#mania/3816042"
+          >
+        </label>
+
+        <div class="separator"><span>or upload a file</span></div>
+
+        <label class="wide">Chart file
+          <input name="chart" type="file" accept=".osu,.sm,.qua,.rox,.jrox,.yrox,.json,.yaml,.yml">
+        </label>
+        <label>Rates (comma-separated)
+          <input name="rates" value="0.85, 1.0, 1.25, 1.5" required>
+        </label>
+        <label>Mode
+          <select name="mode">
+            <option value="msd">MSD — raw difficulty</option>
+            <option value="ssr">SSR — score-relative</option>
+          </select>
+        </label>
+        <label>SSR score goal
+          <input name="score_goal" type="number" min="0" max="1" step="0.001" value="0.93">
+        </label>
+        <button type="submit">Rate chart</button>
+      </form>
+
+      <p id="status" role="status"></p>
+      <div id="results" hidden>
+        <p id="summary"></p>
+        <div class="table-wrap">
+          <table>
+            <thead>
+              <tr>
+                <th>Rate</th><th>Overall</th><th>Stream</th><th>Jumpstream</th>
+                <th>Handstream</th><th>Stamina</th><th>Jackspeed</th>
+                <th>Chordjack</th><th>Technical</th>
+              </tr>
+            </thead>
+            <tbody id="ratings"></tbody>
+          </table>
+        </div>
+      </div>
+    </section>
+  </main>
+</body>
+</html>

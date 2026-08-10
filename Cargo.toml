@@ -3,5 +3,6 @@ members = [
     "crates/minacalc-sys",
     "crates/minacalc-rs",
     "crates/minacalc-bindings",
+    "examples/rox-axum-worker",
 ]
 resolver = "2"
