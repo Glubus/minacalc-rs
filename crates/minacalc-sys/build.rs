@@ -50,6 +50,7 @@ fn main() {
     println!("cargo:rerun-if-changed=c_code/Models/NoteData/NoteDataStructures.h");
     println!("cargo:rerun-if-changed=c_code/MinaCalc/MinaCalc.cpp");
     println!("cargo:rerun-if-changed=c_code/MinaCalc/MinaCalc.h");
+    println!("cargo:rerun-if-changed=c_code/MinaCalc/MinaCalcHelpers.h");
     println!("cargo:rerun-if-changed=c_code/MinaCalc/UlbuAcolytes.h");
     println!("cargo:rerun-if-changed=c_code/MinaCalc/UlbuBase.h");
     println!("cargo:rerun-if-changed=c_code/MinaCalc/UlbuSevenKey.h");

@@ -330,25 +330,15 @@ dependencies = [
 
 [[package]]
 name = "minacalc-rs"
-version = "515.1.1"
+version = "515.1.2"
 dependencies = [
  "criterion",
- "minacalc-sys 515.1.0",
+ "minacalc-sys",
 ]
 
 [[package]]
 name = "minacalc-sys"
-version = "515.1.0"
-source = "registry+https://github.com/rust-lang/crates.io-index"
-checksum = "ac7b658db798089a7eeadd4ef8f5c556ad9ff0c5655b8e67b54f3fa3fbefe358"
-dependencies = [
- "bindgen",
- "cc",
-]
-
-[[package]]
-name = "minacalc-sys"
-version = "515.1.1"
+version = "515.1.2"
 dependencies = [
  "bindgen",
  "cc",

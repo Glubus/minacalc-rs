@@ -1,59 +1,88 @@
 # minacalc-sys
 
-Raw FFI bindings for [MinaCalc](https://github.com/etternagame/etterna) — the difficulty rating calculator used by [Etterna](https://etternaonline.com).
-
-This crate is intentionally minimal: it exposes the C API surface as-is, with no safety guarantees. Everything here is `unsafe`. For a safe wrapper, see [`minacalc-rs`](../minacalc-rs) (coming soon).
+Raw generated Rust bindings for the vendored MinaCalc v515 C++ calculator.
+This crate exposes unsafe FFI directly. Prefer
+[`minacalc-rs`](../minacalc-rs) for a safe Rust API.
 
 ## Versioning
 
-The **major version tracks the MinaCalc algorithm version**. `515.x.x` wraps calc v515, `516.x.x` will wrap calc v516, etc. Multiple major versions can coexist in a Cargo workspace since they are semver-incompatible by design.
+The major crate version follows the MinaCalc algorithm version. `515.x` wraps
+MinaCalc v515.
 
-## What's exposed
+## Exposed API
+
+The C bridge currently exports:
 
 ```c
-CalcHandle* create_calc();
-void        destroy_calc(CalcHandle*);
+int calc_version(void);
 
-SkillsetRatings calc_at_rate(CalcHandle*, NoteInfo*, size_t, float rate, float goal, uint32_t keys, CalcMode);
-AllRates        calc_all_rates(CalcHandle*, NoteInfo*, size_t, uint32_t keys, CalcMode);
+CalcHandle *create_calc(void);
+void destroy_calc(CalcHandle *calc);
+
+void set_ssr_goal_cap(CalcHandle *calc, float goal_cap);
+void set_low_acc_cutoff(CalcHandle *calc, float cutoff);
+void set_ssr_rating_cap(CalcHandle *calc, float rating_cap);
+void set_default_score_goal(CalcHandle *calc, float score_goal);
+void set_grind_scaling_enabled(CalcHandle *calc, bool enabled);
+
+Ssr calc_at_rate(
+    CalcHandle *calc,
+    NoteInfo *rows,
+    size_t num_rows,
+    float music_rate,
+    float score_goal,
+    unsigned int keycount,
+    CalcMode mode
+);
+
+MsdForAllRates calc_all_rates(
+    CalcHandle *calc,
+    const NoteInfo *rows,
+    size_t num_rows,
+    unsigned int keycount,
+    CalcMode mode
+);
 ```
 
-### Types
+`Ssr` contains overall plus the seven skillsets. `MsdForAllRates` contains
+fourteen `Ssr` values for rates 0.7x through 2.0x.
 
-| C type | Description |
-|--------|-------------|
-| `CalcHandle` | Opaque calculator instance |
-| `NoteInfo` | One row: `notes: u32` (column bitmask), `row_time: f32` (seconds) |
-| `SkillsetRatings` | 8 floats: overall + 7 skillsets |
-| `AllRates` | 14 × `SkillsetRatings` (0.7× to 2.0× in 0.1 steps) |
-| `CalcMode` | `CalcMode_SSR` (capped) or `CalcMode_MSD` (uncapped) |
-
-## Usage
+## Raw Rust example
 
 ```rust
-use minacalc_sys::*;
+use minacalc_sys::{
+    calc_at_rate, create_calc, destroy_calc, set_ssr_goal_cap, CalcMode,
+    NoteInfo,
+};
 
 fn main() {
     unsafe {
         let calc = create_calc();
         assert!(!calc.is_null());
+        set_ssr_goal_cap(calc, 1.0);
 
-        let notes = vec![
-            NoteInfo { notes: 0b0001, row_time: 0.0 },
-            NoteInfo { notes: 0b0010, row_time: 0.5 },
+        let mut notes = [
+            NoteInfo {
+                notes: 0b0001,
+                rowTime: 0.0,
+            },
+            NoteInfo {
+                notes: 0b0010,
+                rowTime: 0.15,
+            },
         ];
 
-        let result = calc_at_rate(
+        let scores = calc_at_rate(
             calc,
-            notes.as_ptr() as *mut _,
+            notes.as_mut_ptr(),
             notes.len(),
             1.0,
-            0.93,
+            1.0,
             4,
-            CalcMode_SSR,
+            CalcMode::SSR,
         );
 
-        println!("Overall: {}", result.overall);
+        println!("Overall: {}", scores.overall);
         destroy_calc(calc);
     }
 }
@@ -61,8 +90,9 @@ fn main() {
 
 ## Build requirements
 
-- A C++ compiler (g++ or clang++) — MinaCalc source is bundled
-- `libclang` for bindgen at build time
+- Rust with Cargo
+- A C++20 compiler
+- `libclang` for bindgen
 
 ## License
 

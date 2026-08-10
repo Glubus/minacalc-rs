@@ -2,7 +2,7 @@ use minacalc_sys::{calc_all_rates, calc_at_rate, create_calc, destroy_calc, Calc
 
 fn main() {
     // Two notes: column 1 at t=0s, column 2 at t=0.5s
-    let notes = vec![
+    let mut notes = [
         NoteInfo {
             notes: 1,
             rowTime: 0.0,
@@ -20,7 +20,7 @@ fn main() {
         // Single rate: 1.0x, score goal 0.93, 4K, SSR (capped)
         let ssr = calc_at_rate(
             calc,
-            notes.as_ptr() as *mut _,
+            notes.as_mut_ptr(),
             notes.len(),
             1.0,  // music rate
             0.93, // score goal
@@ -34,7 +34,7 @@ fn main() {
         // All rates (0.7x to 2.0x), MSD (uncapped)
         let all = calc_all_rates(
             calc,
-            notes.as_ptr() as *mut _,
+            notes.as_ptr(),
             notes.len(),
             4, // key count
             CalcMode::MSD,
