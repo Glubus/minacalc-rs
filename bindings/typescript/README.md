@@ -39,3 +39,10 @@ deno run --allow-ffi --allow-env my-chart.ts
 `calcAtRate(notes, rate, goal?, keys?, mode?)` defaults to SSR, goal `0.93`,
 and 4K. `calcAllRates(notes, keys?, mode?)` defaults to MSD and returns 14
 scores from 0.7x to 2.0x. Notes use a `u32` bitmask and absolute seconds.
+
+## Configuration and custom rates
+
+Every runtime also exports `DEFAULT_CONFIG`, `calcAtRateDetailed`, and
+`calcRates`. Copy the default configuration before tweaking it; setting
+`ssrRatingCap` to `null` disables that cap. Detailed results include the
+effective `grindScaler`.

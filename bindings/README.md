@@ -42,6 +42,7 @@ Rows must be non-empty and ordered by time. MinaCalc supports 4K, 6K, and 7K.
 - [`csharp/`](csharp/README.md): .NET 8+.
 - [`go/`](go/README.md): Go 1.22+ with cgo.
 
-All wrappers expose `calc_at_rate`/`CalcAtRate` and
-`calc_all_rates`/`CalcAllRates`. The latter returns fourteen scores for rates
-0.7x through 2.0x, in 0.1x steps.
+All wrappers expose the original single/all-rate functions plus a validated
+`CalcConfig`, a custom-rates function, and a detailed single-rate result that
+contains the effective grind scaler. A null/omitted config retains Etterna's
+defaults; a nullable rating cap disables that cap cleanly.

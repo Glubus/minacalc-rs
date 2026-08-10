@@ -1,5 +1,6 @@
 /// A single row of notes.
 /// `notes` is a bitmask of active columns, `row_time` is in seconds.
+#[repr(C)]
 #[derive(Debug, Clone, Copy)]
 pub struct Note {
     pub notes: u32,
@@ -26,6 +27,14 @@ pub struct SkillsetScores {
     pub jackspeed: f32,
     pub chordjack: f32,
     pub technical: f32,
+}
+
+/// Scores plus metadata produced by the same calculation.
+#[derive(Debug, Clone, Copy)]
+pub struct DetailedResult {
+    pub scores: SkillsetScores,
+    /// Effective grind multiplier; `1.0` when it was not applied.
+    pub grind_scaler: f32,
 }
 
 impl From<minacalc_sys::Ssr> for SkillsetScores {

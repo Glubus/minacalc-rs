@@ -6,7 +6,9 @@
 
 constexpr float max_rating = 100.F;
 constexpr float min_rating = 0.F;
-constexpr float msd_score_goal = 0.93F;
+constexpr float default_score_goal = 0.93F;
+constexpr float low_acc_cutoff = 0.9F;
+constexpr float ssr_goal_cap = 0.965F;
 
 static const std::vector<float> dimples_the_all_zero_output{
 	min_rating, min_rating, min_rating, min_rating,
@@ -20,9 +22,7 @@ static const std::vector<float> gertrude_the_all_max_output{
 };
 
 inline auto
-downscale_low_accuracy_scores(const float f,
-							  const float sg,
-							  const float low_acc_cutoff) -> float
+downscale_low_accuracy_scores(const float f, const float sg) -> float
 {
 	return sg >= low_acc_cutoff
 			 ? f

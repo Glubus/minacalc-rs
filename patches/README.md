@@ -1,12 +1,15 @@
 # Vendored MinaCalc patches
 
-After replacing the vendored sources in `crates/minacalc-sys/c_code/MinaCalc`,
-reapply the minacalc-rs configurable calculator settings with:
+The distributable patch lives at
+`crates/minacalc-sys/patches/configurable-calc.patch`, so it is included when
+`minacalc-sys` is published. After replacing the pristine vendored sources in
+`crates/minacalc-sys/c_code`, verify the temporary patched build with:
 
 ```sh
 just patch-minacalc
 ```
 
-The command is idempotent. It exits successfully when the patch is already
-present and fails with an explicit message when a new upstream version needs a
-manual conflict resolution. Run `just test` after applying it.
+The command does not modify `c_code`. `build.rs` copies those sources into
+Cargo's `OUT_DIR`, patches and compiles the copy, generates bindings from it,
+then removes the temporary tree. It fails when a new upstream version requires
+the patch to be rebased. Run `just test` afterward.

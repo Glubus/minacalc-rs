@@ -36,3 +36,7 @@ Console.WriteLine(allRates[3].Overall); // 1.0x
 `CalcAtRate` defaults to SSR with a 0.93 score goal. Use `CalcMode.Msd` for
 raw difficulty. Every `Note` contains a bitmask of active zero-based columns
 and an absolute timestamp in seconds.
+
+Use `CalcConfig`, `Calculator.CalcAtRateDetailed`, and `Calculator.CalcRates`
+for tuning, grind-scaler metadata, and custom rate lists. A null
+`SsrRatingCap` disables the per-skillset cap.

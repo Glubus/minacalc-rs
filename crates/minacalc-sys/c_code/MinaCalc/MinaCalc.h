@@ -81,17 +81,6 @@ struct RowInfo
 class Calc
 {
   public:
-	/// Change the maximum score goal used for SSR calculations.
-	void SetSsrGoalCap(float goal_cap) { ssr_goal_cap = goal_cap; }
-	/// Change the score threshold below which SSR values are downscaled.
-	void SetLowAccCutoff(float cutoff) { low_acc_cutoff = cutoff; }
-	/// Change the maximum value applied to individual SSR skillsets.
-	void SetSsrRatingCap(float rating_cap) { ssr_rating_cap = rating_cap; }
-	/// Change the score goal used by all-rates calculations.
-	void SetDefaultScoreGoal(float score_goal) { default_score_goal = score_goal; }
-	/// Enable or disable the SSR grind scaling penalty.
-	void SetGrindScalingEnabled(bool enabled) { grind_scaling_enabled = enabled; }
-
 	/** Primary calculator function that wraps everything else. Runs notedata
 	* through ulbu which builds the base diff values and then runs the chisel
 	* function over the produced diff vectors for each skillset. The main
@@ -110,17 +99,6 @@ class Calc
 
 	/// Set true to force calc params to load outside debug mode.
 	bool loadparams = false;
-
-	/// Maximum score goal accepted by SSR calculations.
-	float ssr_goal_cap = 0.965F;
-	/// Score threshold below which SSR values are downscaled.
-	float low_acc_cutoff = 0.9F;
-	/// Maximum value applied to individual SSR skillsets before aggregation.
-	float ssr_rating_cap = 40.F;
-	/// Score goal used by all-rates calculations.
-	float default_score_goal = 0.93F;
-	/// Whether SSR values are multiplied by the grind scaler.
-	bool grind_scaling_enabled = true;
 
 	/// Assigns the keymode specific logic
 	unsigned keycount = 4;

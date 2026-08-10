@@ -31,26 +31,6 @@ extern "C" {
 		delete reinterpret_cast<Calc*>(calc);
 	}
 
-	void set_ssr_goal_cap(CalcHandle *calc, float goal_cap) {
-		reinterpret_cast<Calc*>(calc)->SetSsrGoalCap(goal_cap);
-	}
-
-	void set_low_acc_cutoff(CalcHandle *calc, float cutoff) {
-		reinterpret_cast<Calc*>(calc)->SetLowAccCutoff(cutoff);
-	}
-
-	void set_ssr_rating_cap(CalcHandle *calc, float rating_cap) {
-		reinterpret_cast<Calc*>(calc)->SetSsrRatingCap(rating_cap);
-	}
-
-	void set_default_score_goal(CalcHandle *calc, float score_goal) {
-		reinterpret_cast<Calc*>(calc)->SetDefaultScoreGoal(score_goal);
-	}
-
-	void set_grind_scaling_enabled(CalcHandle *calc, bool enabled) {
-		reinterpret_cast<Calc*>(calc)->SetGrindScalingEnabled(enabled);
-	}
-
 
 
 

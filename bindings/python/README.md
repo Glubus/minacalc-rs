@@ -59,3 +59,9 @@ The return value has 14 `SkillsetScores`, for 0.7x through 2.0x.
 Invalid calculator input raises `ValueError`; a failure reported by the native
 library raises `MinaCalcError`, whose `status` attribute contains the ABI code.
 The input must be non-empty; `keys` must be 4, 6, or 7.
+
+## Configuration and custom rates
+
+Pass a `CalcConfig` to `calc_at_rate_detailed` or `calc_rates`. Set
+`ssr_rating_cap=None` to disable the cap. Detailed results include the
+effective `grind_scaler`.

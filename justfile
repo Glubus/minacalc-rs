@@ -54,6 +54,6 @@ release version:
 qa:
     just check
 
-# Reapply minacalc-rs adaptations after updating the vendored MinaCalc sources
+# Verify that the temporary build copy still accepts the MinaCalc patch
 patch-minacalc:
     ./scripts/apply-minacalc-patches.sh
