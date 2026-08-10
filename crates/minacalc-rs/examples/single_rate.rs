@@ -4,12 +4,30 @@ fn main() {
     let calc = Calc::new().expect("failed to create calculator");
 
     let notes = vec![
-        Note { notes: 0b0001, row_time: 0.0 },
-        Note { notes: 0b0010, row_time: 0.15 },
-        Note { notes: 0b0100, row_time: 0.30 },
-        Note { notes: 0b1000, row_time: 0.45 },
-        Note { notes: 0b0001, row_time: 0.60 },
-        Note { notes: 0b0010, row_time: 0.75 },
+        Note {
+            notes: 0b0001,
+            row_time: 0.0,
+        },
+        Note {
+            notes: 0b0010,
+            row_time: 0.15,
+        },
+        Note {
+            notes: 0b0100,
+            row_time: 0.30,
+        },
+        Note {
+            notes: 0b1000,
+            row_time: 0.45,
+        },
+        Note {
+            notes: 0b0001,
+            row_time: 0.60,
+        },
+        Note {
+            notes: 0b0010,
+            row_time: 0.75,
+        },
     ];
 
     // SSR: score-relative difficulty at 1.0x, score goal 93%

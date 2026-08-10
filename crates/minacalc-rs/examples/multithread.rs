@@ -4,10 +4,22 @@ use std::thread;
 /// Calc is !Send — each thread owns its own instance.
 fn main() {
     let notes = vec![
-        Note { notes: 0b0001, row_time: 0.0 },
-        Note { notes: 0b0010, row_time: 0.15 },
-        Note { notes: 0b0100, row_time: 0.30 },
-        Note { notes: 0b1000, row_time: 0.45 },
+        Note {
+            notes: 0b0001,
+            row_time: 0.0,
+        },
+        Note {
+            notes: 0b0010,
+            row_time: 0.15,
+        },
+        Note {
+            notes: 0b0100,
+            row_time: 0.30,
+        },
+        Note {
+            notes: 0b1000,
+            row_time: 0.45,
+        },
     ];
 
     let handles: Vec<_> = (0..4)

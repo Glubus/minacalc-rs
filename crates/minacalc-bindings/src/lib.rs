@@ -152,6 +152,14 @@ pub extern "C" fn minacalc_version() -> i32 {
 ///
 /// `mode` is `0` for MSD and `1` for SSR. `out_scores` must point to writable
 /// storage. The function never takes ownership of `notes`.
+///
+/// # Safety
+///
+/// When `len` is non-zero, `notes` must point to `len` contiguous, initialized
+/// [`MinaCalcNote`] values that remain readable for the duration of this call.
+/// `out_scores` must be non-null, properly aligned, and valid for writing one
+/// [`MinaCalcScores`] value. The pointed-to memory must not be concurrently
+/// mutated while this function executes.
 #[no_mangle]
 pub unsafe extern "C" fn minacalc_calc_at_rate(
     notes: *const MinaCalcNote,
@@ -180,6 +188,14 @@ pub unsafe extern "C" fn minacalc_calc_at_rate(
 }
 
 /// Calculates every rate from 0.7x to 2.0x.
+///
+/// # Safety
+///
+/// When `len` is non-zero, `notes` must point to `len` contiguous, initialized
+/// [`MinaCalcNote`] values that remain readable for the duration of this call.
+/// `out_scores` must be non-null, properly aligned, and valid for writing one
+/// [`MinaCalcAllRates`] value. The pointed-to memory must not be concurrently
+/// mutated while this function executes.
 #[no_mangle]
 pub unsafe extern "C" fn minacalc_calc_all_rates(
     notes: *const MinaCalcNote,

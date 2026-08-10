@@ -1,4 +1,4 @@
-use criterion::{BenchmarkId, Criterion, criterion_group, criterion_main};
+use criterion::{criterion_group, criterion_main, BenchmarkId, Criterion};
 use minacalc_rs::{Calc, CalcMode, Note};
 
 /// Generate a simple stream of alternating columns at a given NPS.
@@ -17,11 +17,17 @@ fn bench_calc_at_rate(c: &mut Criterion) {
     let notes = stream(500, 8.0);
 
     c.bench_function("calc_at_rate/1.0x SSR", |b| {
-        b.iter(|| calc.calc_at_rate(&notes, 1.0, 0.93, 4, CalcMode::Ssr).unwrap());
+        b.iter(|| {
+            calc.calc_at_rate(&notes, 1.0, 0.93, 4, CalcMode::Ssr)
+                .unwrap()
+        });
     });
 
     c.bench_function("calc_at_rate/1.5x MSD", |b| {
-        b.iter(|| calc.calc_at_rate(&notes, 1.5, 0.93, 4, CalcMode::Msd).unwrap());
+        b.iter(|| {
+            calc.calc_at_rate(&notes, 1.5, 0.93, 4, CalcMode::Msd)
+                .unwrap()
+        });
     });
 }
 
@@ -52,5 +58,10 @@ fn bench_note_count_scaling(c: &mut Criterion) {
     group.finish();
 }
 
-criterion_group!(benches, bench_calc_at_rate, bench_calc_all_rates, bench_note_count_scaling);
+criterion_group!(
+    benches,
+    bench_calc_at_rate,
+    bench_calc_all_rates,
+    bench_note_count_scaling
+);
 criterion_main!(benches);
