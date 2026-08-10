@@ -58,14 +58,15 @@
                   <option value="msd">MSD · raw difficulty</option>
                   <option value="ssr">SSR · score-relative</option>
                 </select>
+                <small>SSR-specific controls appear when SSR is selected.</small>
               </label>
-              <label>SSR score goal
+              <label data-ssr-only>SSR score goal
                 <input name="score_goal" type="number" min="0" max="1" step="0.001" value="0.93">
               </label>
             </div>
           </fieldset>
 
-          <fieldset>
+          <fieldset data-ssr-only>
             <legend>Rating behavior</legend>
             <div class="field-grid">
               <label>SSR goal cap

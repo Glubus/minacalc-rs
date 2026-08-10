@@ -167,6 +167,10 @@ button { color: inherit; }
   box-shadow: 0 40px 140px #000d;
 }
 
+.filters-dialog [hidden] {
+  display: none;
+}
+
 .filters-dialog[open] {
   display: flex;
   flex-direction: column;

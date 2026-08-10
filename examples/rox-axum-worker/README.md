@@ -30,10 +30,10 @@ against 1.00x, and the complete rating table. The server accepts uploads up to
 | `rates` | no | Comma-separated positive rates; defaults to `1.0` |
 | `mode` | no | `msd` or `ssr`; defaults to `msd` |
 | `score_goal` | no | SSR goal from `0.0` to `1.0`; defaults to `0.93` |
-| `ssr_goal_cap` | no | Maximum SSR goal; defaults to `0.965` |
-| `low_acc_cutoff` | no | Low-accuracy scaling threshold; defaults to `0.90` |
-| `ssr_rating_cap` | no | Positive cap, or empty/`none` to disable it |
-| `grind_scaling` | no | `true` or `false`; defaults to `true` |
+| `ssr_goal_cap` | no | SSR-only maximum goal; defaults to `0.965` |
+| `low_acc_cutoff` | no | SSR-only low-accuracy scaling threshold; defaults to `0.90` |
+| `ssr_rating_cap` | no | SSR-only positive cap, or empty/`none` to disable it |
+| `grind_scaling` | no | SSR-only; `true` or `false`, defaults to `true` |
 | `scaler_*` | no | Positive Stream, Jumpstream, Handstream, Stamina, Jackspeed, Chordjack, and Technical multipliers |
 
 ```sh
@@ -57,6 +57,11 @@ curl http://127.0.0.1:3000/api/rate \
 The worker extracts `3816042` and downloads
 `https://osu.ppy.sh/osu/3816042`. Other hosts are rejected so this example
 cannot be used as an arbitrary server-side proxy.
+
+The browser hides and disables score-goal, SSR cap, low-accuracy, rating-cap,
+and grind controls in MSD mode. MinaCalc only applies those post-processing
+settings to SSR. Music rates and per-skillset multipliers remain available in
+both modes. Canonical MSD uses the calculator's `0.93` solver target.
 
 The response contains chart metadata, source note and merged row counts, and
 all eight MinaCalc skillsets for every requested rate:

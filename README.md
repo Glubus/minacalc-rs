@@ -82,8 +82,8 @@ chord. `row_time` is the absolute row time in seconds. Supported key counts are
 
 | Mode | Behavior |
 | --- | --- |
-| `CalcMode::Ssr` | Score-relative rating. The `goal` passed to `calc_at_rate` is used. |
-| `CalcMode::Msd` | Raw difficulty. The score goal is ignored. |
+| `CalcMode::Ssr` | Score-relative rating. The requested goal is capped by `ssr_goal_cap`; low-accuracy scaling, the SSR rating cap, and grind scaling are then applied. |
+| `CalcMode::Msd` | File difficulty without SSR post-processing. Canonical all-rates MSD uses a `0.93` solver target. For `calc_at_rate`, goals below `0.93` still change the shared solver target, while goals above it are capped to `0.93`. |
 
 Every result contains `overall`, `stream`, `jumpstream`, `handstream`,
 `stamina`, `jackspeed`, `chordjack`, and `technical` scores.
@@ -116,6 +116,8 @@ values are downscaled. `set_ssr_rating_cap` changes the cap applied to individua
 SSR skillsets before overall aggregation. `set_default_score_goal` controls
 `calc_all_rates` in SSR mode without affecting MSD. Disabling grind scaling
 removes the short/inconsistently-dense chart penalty from SSR results.
+These four SSR post-processing settings do not apply in MSD mode. Skillset
+scalers and music rates apply in both modes.
 Invalid, non-finite, negative, or out-of-range values return an error. Use
 `calc_rates` for arbitrary rate lists and `calc_at_rate_detailed` to retrieve
 the effective grind scaler alongside the scores.

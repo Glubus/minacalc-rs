@@ -72,8 +72,14 @@ fn main() -> Result<(), Box<dyn std::error::Error>> {
   calculations (`0.93` by default); MSD is unaffected.
 - `Calc::set_grind_scaling_enabled`: enable or disable the SSR penalty for
   short or inconsistently dense charts (enabled by default).
-- `CalcMode::Ssr`: score-relative difficulty using the supplied score goal.
-- `CalcMode::Msd`: raw difficulty; the score goal is ignored.
+- `CalcMode::Ssr`: score-relative difficulty using the supplied score goal,
+  capped by `ssr_goal_cap`, with low-accuracy, rating-cap, and grind processing.
+- `CalcMode::Msd`: file difficulty without SSR post-processing. Standard
+  all-rates MSD uses a fixed `0.93` solver target. `calc_at_rate` still uses
+  goals below `0.93` in the shared solver; higher goals are capped to `0.93`.
+
+`ssr_goal_cap`, `low_acc_cutoff`, `ssr_rating_cap`, and `grind_scaling` only
+affect SSR. Music rates and skillset scalers affect both modes.
 
 Each `SkillsetScores` value contains `overall`, `stream`, `jumpstream`,
 `handstream`, `stamina`, `jackspeed`, `chordjack`, and `technical`.

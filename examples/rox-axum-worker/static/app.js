@@ -26,6 +26,8 @@ const loading = document.querySelector('#loading');
 const resultsSection = document.querySelector('#results');
 const radarRate = document.querySelector('#radar-rate');
 const tableBody = document.querySelector('#ratings-table');
+const modeSelect = form.elements.mode;
+const ssrOnlySections = [...form.querySelectorAll('[data-ssr-only]')];
 let currentResponse = null;
 let selectedIndex = 0;
 
@@ -35,10 +37,12 @@ document.querySelector('#apply-filters').addEventListener('click', () => filters
 document.querySelector('#reset-filters').addEventListener('click', resetFilters);
 filtersDialog.addEventListener('click', closeOnBackdrop);
 radarRate.addEventListener('change', () => selectRate(Number(radarRate.value)));
+modeSelect.addEventListener('change', updateModeFields);
 
 Object.keys(FILTER_DEFAULTS).forEach((name) => {
   form.elements[name].addEventListener('input', updateFilterCount);
 });
+updateModeFields();
 
 form.addEventListener('submit', async (event) => {
   event.preventDefault();
@@ -69,7 +73,6 @@ function renderResponse(body) {
   status.className = 'status';
   status.textContent = `Calculated ${body.results.length} rates · ${body.title || body.file_name}`;
   resultsSection.hidden = false;
-  resultsSection.scrollIntoView({ behavior: 'smooth', block: 'start' });
 }
 
 function renderHero(body) {
@@ -190,12 +193,23 @@ function resetFilters() {
   Object.entries(FILTER_DEFAULTS).forEach(([name, value]) => {
     form.elements[name].value = value;
   });
+  updateModeFields();
+}
+
+function updateModeFields() {
+  const ssrEnabled = modeSelect.value === 'ssr';
+  ssrOnlySections.forEach((section) => {
+    section.hidden = !ssrEnabled;
+    section.querySelectorAll('input, select').forEach((control) => {
+      control.disabled = !ssrEnabled;
+    });
+  });
   updateFilterCount();
 }
 
 function updateFilterCount() {
   const modified = Object.entries(FILTER_DEFAULTS).filter(([name, value]) => (
-    String(form.elements[name].value).trim() !== value
+    !form.elements[name].disabled && String(form.elements[name].value).trim() !== value
   )).length;
   filterCount.textContent = String(modified);
   filterCount.hidden = modified === 0;
