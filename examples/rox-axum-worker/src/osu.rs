@@ -58,9 +58,10 @@ fn beatmap_id(input: &str) -> Result<u64, ApiError> {
 
 fn direct_download_id(url: &Url) -> Option<u64> {
     let mut segments = url.path_segments()?;
-    match (segments.next(), segments.next()) {
-        (Some("osu" | "beatmaps" | "b"), Some(id)) => positive_id(id),
-        _ => None,
+    if let (Some("osu" | "beatmaps" | "b"), Some(id)) = (segments.next(), segments.next()) {
+        positive_id(id)
+    } else {
+        None
     }
 }
 

@@ -123,7 +123,8 @@ Invalid, non-finite, negative, or out-of-range values return an error. Use
 the effective grind scaler alongside the scores.
 
 `Calc` is not `Send` or `Sync` because the underlying C++ instance is not
-thread-safe. Create one calculator per thread; see
+thread-safe. Create one calculator per thread and reuse it for every calculation
+performed on that thread; see
 [`examples/multithread.rs`](crates/minacalc-rs/examples/multithread.rs).
 
 ## Complete Axum + ROX worker
@@ -136,8 +137,8 @@ service rather than an isolated snippet. It:
 - parses it with [Rhythm Open Exchange](https://github.com/Glubus/rhythm-open-exchange);
 - merges simultaneous notes into MinaCalc row bitmasks and ignores mines;
 - calculates any caller-supplied list of music rates in MSD or SSR mode;
-- runs parsing and MinaCalc on Tokio's blocking pool because `Calc` is not
-  `Send` or `Sync`;
+- dispatches CPU work through a bounded queue to dedicated calculator threads;
+  every thread owns and reuses exactly one `Calc` instance;
 - serves a polished browser interface at `http://127.0.0.1:3000/` with the
   complete calculator configuration, chart artwork, an interactive skillset
   radar, rate progression graph, deltas, and a full results table.

@@ -5,6 +5,10 @@ Every package calls the `minacalc-bindings` Rust crate through the stable C ABI
 in [`include/minacalc.h`](include/minacalc.h). They never use the C++ source
 tree directly.
 
+The ABI lazily creates and reuses one MinaCalc instance per calling OS thread.
+Language wrappers remain stateless: callers do not manage native handles, while
+separate threads never share the same calculator.
+
 ## Build and locate the native library
 
 ```sh

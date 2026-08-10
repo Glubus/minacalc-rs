@@ -3,11 +3,12 @@ use std::str::FromStr;
 use minacalc_rs::{CalcConfig, CalcMode, SkillsetScores};
 use serde::Serialize;
 
-use crate::error::ApiError;
+use crate::{error::ApiError, pool::CalculatorPool};
 
 #[derive(Clone)]
 pub(crate) struct AppState {
     pub(crate) http: reqwest::Client,
+    pub(crate) calculators: CalculatorPool,
 }
 
 pub(crate) struct ChartPayload {

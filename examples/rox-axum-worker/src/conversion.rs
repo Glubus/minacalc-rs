@@ -1,3 +1,5 @@
+//! ROX-to-MinaCalc conversion adapted from the Metron crate.
+
 use minacalc_rs::Note;
 use rhythm_open_exchange::{NoteType, RoxChart};
 

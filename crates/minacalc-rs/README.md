@@ -87,7 +87,9 @@ Each `SkillsetScores` value contains `overall`, `stream`, `jumpstream`,
 `Note::notes` is a column bitmask and `Note::row_time` is an absolute time in
 seconds. MinaCalc supports 4K, 6K, and 7K.
 
-`Calc` is not `Send` or `Sync`; create one calculator per thread.
+`Calc` is not `Send` or `Sync`. Create it once on the thread that will use it,
+then reuse that instance for subsequent charts and rates. For parallel work,
+create exactly one independent calculator per worker thread.
 
 ## Build requirements
 

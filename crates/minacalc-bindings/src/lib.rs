@@ -2,10 +2,18 @@
 //!
 //! This crate is intentionally small: it owns ABI validation and conversion,
 //! while all difficulty calculation remains in [`minacalc_rs`].
+//! Each calling OS thread lazily owns and reuses one calculator instance.
 
-use std::panic::{catch_unwind, AssertUnwindSafe};
+use std::{
+    cell::RefCell,
+    panic::{catch_unwind, AssertUnwindSafe},
+};
 
 use minacalc_rs::{Calc, CalcConfig, CalcMode, Note, SkillsetScalers, SkillsetScores};
+
+thread_local! {
+    static THREAD_CALCULATOR: RefCell<Option<Calc>> = const { RefCell::new(None) };
+}
 
 /// A note row consumed by the C ABI.
 #[repr(C)]
@@ -178,6 +186,27 @@ unsafe fn config_from_raw(config: *const MinaCalcConfig) -> Result<CalcConfig, M
     Ok(config)
 }
 
+fn with_thread_calculator<T>(
+    config: CalcConfig,
+    calculate: impl FnOnce(&mut Calc) -> Result<T, MinaCalcStatus>,
+) -> Result<T, MinaCalcStatus> {
+    THREAD_CALCULATOR.with(|slot| {
+        let mut slot = slot.try_borrow_mut().map_err(|_| MinaCalcStatus::Panic)?;
+        if slot.is_none() {
+            let calc = Calc::new().map_err(|error| match error {
+                minacalc_rs::Error::AllocationFailed => MinaCalcStatus::AllocationFailed,
+                _ => MinaCalcStatus::InvalidArgument,
+            })?;
+            *slot = Some(calc);
+        }
+
+        let calc = slot.as_mut().ok_or(MinaCalcStatus::AllocationFailed)?;
+        calc.set_config(config)
+            .map_err(|_| MinaCalcStatus::InvalidArgument)?;
+        calculate(calc)
+    })
+}
+
 fn calculate_at_rate(
     notes: &[MinaCalcNote],
     rate: f32,
@@ -190,7 +219,6 @@ fn calculate_at_rate(
         return Err(MinaCalcStatus::InvalidArgument);
     }
     validate(notes, keys)?;
-    let calc = Calc::with_config(config).map_err(|_| MinaCalcStatus::InvalidArgument)?;
     let notes: Vec<Note> = notes
         .iter()
         .map(|note| Note {
@@ -198,9 +226,12 @@ fn calculate_at_rate(
             row_time: note.row_time,
         })
         .collect();
-    calc.calc_at_rate(&notes, rate, goal, keys, mode_from_raw(mode)?)
-        .map(MinaCalcScores::from)
-        .map_err(|_| MinaCalcStatus::EmptyNotes)
+    let mode = mode_from_raw(mode)?;
+    with_thread_calculator(config, |calc| {
+        calc.calc_at_rate(&notes, rate, goal, keys, mode)
+            .map(MinaCalcScores::from)
+            .map_err(|_| MinaCalcStatus::EmptyNotes)
+    })
 }
 
 fn calculate_all_rates(
@@ -210,7 +241,6 @@ fn calculate_all_rates(
     config: CalcConfig,
 ) -> Result<MinaCalcAllRates, MinaCalcStatus> {
     validate(notes, keys)?;
-    let calc = Calc::with_config(config).map_err(|_| MinaCalcStatus::InvalidArgument)?;
     let notes: Vec<Note> = notes
         .iter()
         .map(|note| Note {
@@ -218,11 +248,14 @@ fn calculate_all_rates(
             row_time: note.row_time,
         })
         .collect();
-    let all_rates = calc
-        .calc_all_rates(&notes, keys, mode_from_raw(mode)?)
-        .map_err(|_| MinaCalcStatus::EmptyNotes)?;
-    Ok(MinaCalcAllRates {
-        rates: all_rates.rates.map(MinaCalcScores::from),
+    let mode = mode_from_raw(mode)?;
+    with_thread_calculator(config, |calc| {
+        let all_rates = calc
+            .calc_all_rates(&notes, keys, mode)
+            .map_err(|_| MinaCalcStatus::EmptyNotes)?;
+        Ok(MinaCalcAllRates {
+            rates: all_rates.rates.map(MinaCalcScores::from),
+        })
     })
 }
 
@@ -345,13 +378,15 @@ pub unsafe extern "C" fn minacalc_calc_at_rate_with_config(
                 row_time: note.row_time,
             })
             .collect();
-        let calc = Calc::with_config(config).map_err(|_| MinaCalcStatus::InvalidArgument)?;
-        let result = calc
-            .calc_at_rate_detailed(&notes, rate, goal, keys, mode_from_raw(mode)?)
-            .map_err(|_| MinaCalcStatus::InvalidArgument)?;
-        Ok(MinaCalcDetailedResult {
-            scores: result.scores.into(),
-            grind_scaler: result.grind_scaler,
+        let mode = mode_from_raw(mode)?;
+        with_thread_calculator(config, |calc| {
+            let result = calc
+                .calc_at_rate_detailed(&notes, rate, goal, keys, mode)
+                .map_err(|_| MinaCalcStatus::InvalidArgument)?;
+            Ok(MinaCalcDetailedResult {
+                scores: result.scores.into(),
+                grind_scaler: result.grind_scaler,
+            })
         })
     })) {
         Ok(Ok(result)) => {
@@ -399,9 +434,11 @@ pub unsafe extern "C" fn minacalc_calc_rates(
                 row_time: note.row_time,
             })
             .collect();
-        let calc = Calc::with_config(config).map_err(|_| MinaCalcStatus::InvalidArgument)?;
-        calc.calc_rates(&notes, rates, keys, mode_from_raw(mode)?)
-            .map_err(|_| MinaCalcStatus::InvalidArgument)
+        let mode = mode_from_raw(mode)?;
+        with_thread_calculator(config, |calc| {
+            calc.calc_rates(&notes, rates, keys, mode)
+                .map_err(|_| MinaCalcStatus::InvalidArgument)
+        })
     })) {
         Ok(Ok(scores)) => {
             for (index, score) in scores.into_iter().enumerate() {
@@ -441,5 +478,32 @@ mod tests {
             unsafe { minacalc_calc_at_rate(std::ptr::null(), 0, 1.0, 0.93, 4, 0, &mut scores) };
         assert_eq!(status, MinaCalcStatus::EmptyNotes);
         assert_eq!(scores.overall, -1.0);
+    }
+
+    #[test]
+    fn reuses_and_reconfigures_one_calculator_per_thread() {
+        THREAD_CALCULATOR.with(|slot| slot.borrow_mut().take());
+
+        let first =
+            with_thread_calculator(CalcConfig::default(), |calc| Ok(calc as *mut Calc as usize))
+                .unwrap();
+        let config = CalcConfig {
+            ssr_goal_cap: 1.0,
+            ..CalcConfig::default()
+        };
+        let second = with_thread_calculator(config, |calc| {
+            assert_eq!(calc.config(), config);
+            Ok(calc as *mut Calc as usize)
+        })
+        .unwrap();
+        let other_thread = std::thread::spawn(|| {
+            with_thread_calculator(CalcConfig::default(), |calc| Ok(calc as *mut Calc as usize))
+                .unwrap()
+        })
+        .join()
+        .unwrap();
+
+        assert_eq!(first, second);
+        assert_ne!(first, other_thread);
     }
 }

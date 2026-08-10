@@ -6,7 +6,11 @@ use axum::{
     Router,
 };
 
-use crate::{api, models::AppState};
+use crate::{
+    api,
+    models::AppState,
+    pool::{CalculatorPool, CalculatorPoolInitError},
+};
 
 const MAX_UPLOAD_BYTES: usize = 16 * 1024 * 1024;
 const INDEX_HTML: &str = include_str!("../static/index.html");
@@ -15,13 +19,14 @@ const CHARTS_JS: &str = include_str!("../static/charts.js");
 const STYLES_CSS: &str = include_str!("../static/styles.css");
 
 /// Builds the Axum application used by the example binary.
-pub fn app() -> Router {
+pub fn app() -> Result<Router, CalculatorPoolInitError> {
     let http = reqwest::Client::builder()
         .user_agent("rox-minacalc-worker/0.1")
         .build()
         .expect("the fixed HTTP client configuration must be valid");
+    let calculators = CalculatorPool::for_available_parallelism()?;
 
-    Router::new()
+    Ok(Router::new()
         .route("/", get(index))
         .route("/app.js", get(javascript))
         .route("/charts.js", get(charts_javascript))
@@ -29,7 +34,7 @@ pub fn app() -> Router {
         .route("/api/health", get(api::health))
         .route("/api/rate", post(api::rate_chart))
         .layer(DefaultBodyLimit::max(MAX_UPLOAD_BYTES))
-        .with_state(AppState { http })
+        .with_state(AppState { http, calculators }))
 }
 
 async fn index() -> Html<&'static str> {

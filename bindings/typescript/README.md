@@ -26,6 +26,10 @@ console.log(calcAllRates(notes)[3].overall); // 1.0x MSD
 
 The Node entry uses [`koffi`](https://koffi.dev/). Node 20+ is required.
 
+The native ABI transparently keeps one reusable MinaCalc instance per calling
+OS thread. JavaScript callers do not need to manage its lifetime, and separate
+runtime threads never share a calculator.
+
 ## Deno and Bun
 
 Import `npm:@glubus/minacalc/deno` in Deno or `@glubus/minacalc/bun` in Bun. Deno needs

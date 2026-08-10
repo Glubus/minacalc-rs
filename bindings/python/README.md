@@ -58,6 +58,10 @@ Invalid calculator input raises `ValueError`; a failure reported by the native
 library raises `MinaCalcError`, whose `status` attribute contains the ABI code.
 The input must be non-empty; `keys` must be 4, 6, or 7.
 
+The native ABI transparently creates and reuses one MinaCalc instance per
+calling OS thread. Python callers do not need to manage calculator handles;
+separate threads never share the same native calculator.
+
 ## Configuration and custom rates
 
 Pass a `CalcConfig` to `calc_at_rate_detailed` or `calc_rates`. Set

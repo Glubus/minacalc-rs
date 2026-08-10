@@ -36,6 +36,10 @@ Console.WriteLine(allRates[3].Overall); // 1.0x
 raw difficulty. Every `Note` contains a bitmask of active zero-based columns
 and an absolute timestamp in seconds.
 
+The native ABI transparently keeps one reusable MinaCalc instance per calling
+OS thread. Applications do not need to manage native handles, and calculators
+are never shared between threads.
+
 Use `CalcConfig`, `Calculator.CalcAtRateDetailed`, and `Calculator.CalcRates`
 for tuning, grind-scaler metadata, and custom rate lists. A null
 `SsrRatingCap` disables the per-skillset cap.

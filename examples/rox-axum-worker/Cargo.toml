@@ -5,9 +5,10 @@ edition = "2021"
 publish = false
 
 [dependencies]
+async-channel = "2.5"
 axum = { version = "0.8.9", features = ["multipart"] }
 minacalc-rs = { path = "../../crates/minacalc-rs" }
 reqwest = { version = "0.13.4", default-features = false, features = ["rustls"] }
 rhythm-open-exchange = { version = "0.6.2", features = ["compression"] }
 serde = { version = "1.0", features = ["derive"] }
-tokio = { version = "1.53.1", features = ["macros", "net", "rt-multi-thread"] }
+tokio = { version = "1.53.1", features = ["macros", "net", "rt-multi-thread", "sync"] }

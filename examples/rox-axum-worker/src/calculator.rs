@@ -7,14 +7,14 @@ use crate::{
     models::{RateResult, RatingRequest, RatingResponse},
 };
 
-pub(crate) fn rate(request: RatingRequest) -> Result<RatingResponse, ApiError> {
+pub(crate) fn rate(calc: &mut Calc, request: RatingRequest) -> Result<RatingResponse, ApiError> {
     let chart = from_bytes(&request.chart.bytes).map_err(|error| {
         ApiError::bad_request(format!("ROX could not parse the chart: {error}"))
     })?;
     let notes = chart_to_notes(&chart).map_err(|error| ApiError::bad_request(error.to_string()))?;
 
-    let calc = Calc::with_config(request.config)
-        .map_err(|error| ApiError::internal(format!("could not create MinaCalc: {error}")))?;
+    calc.set_config(request.config)
+        .map_err(|error| ApiError::internal(format!("could not configure MinaCalc: {error}")))?;
     let scores = calc
         .calc_rates(
             &notes,

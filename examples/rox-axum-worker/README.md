@@ -100,12 +100,15 @@ all eight MinaCalc skillsets for every requested rate:
 ## Why `spawn_blocking`?
 
 ROX parsing and MinaCalc are CPU-bound. More importantly, each `Calc` wraps a
-mutable C++ calculator and is deliberately neither `Send` nor `Sync`. The
-handler moves the uploaded bytes into Tokio's blocking pool, creates one
-calculator inside that worker thread, computes every requested rate, and drops
-it there. No calculator is shared across requests.
+mutable C++ calculator and is deliberately neither `Send` nor `Sync`. At
+startup, the service creates one dedicated worker per available CPU. Each
+worker constructs exactly one `Calc`, owns it for the lifetime of the thread,
+and reconfigures and reuses it across requests. A bounded MPMC queue provides
+backpressure; a one-shot channel returns each response to its Axum handler.
+No calculator is ever moved to or shared with another thread.
 
-The conversion keeps native chart timestamps. MinaCalc applies each requested
+The ROX-to-MinaCalc conversion is adapted from the Metron crate. It keeps native
+chart timestamps. MinaCalc applies each requested
 music rate internally; changing timestamps before `calc_rates` would apply the
 rate twice. Notes sharing a timestamp are merged with bitwise OR, while mines
 are excluded from playable rows.
@@ -118,8 +121,9 @@ are excluded from playable rows.
 | `src/api.rs` | `/api/rate` handler and blocking-worker dispatch |
 | `src/request.rs` | Multipart fields and validated `CalcConfig` construction |
 | `src/osu.rs` | Restricted osu! URL parsing and `.osu` download |
+| `src/pool.rs` | Bounded CPU worker pool with one persistent `Calc` per thread |
 | `src/calculator.rs` | ROX parsing and MinaCalc invocation |
-| `src/conversion.rs` | `RoxChart` to MinaCalc row conversion |
+| `src/conversion.rs` | Metron-derived `RoxChart` to MinaCalc row conversion |
 | `src/models.rs` | Request and JSON response types |
 | `src/error.rs` | HTTP and conversion errors |
 | `static/index.html` | Semantic page structure and Filters dialog |

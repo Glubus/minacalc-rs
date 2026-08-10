@@ -36,6 +36,8 @@ fmt.Println(scores.Overall)
 
 `MSD` calculates raw difficulty; `SSR` calculates score-relative difficulty.
 `CalcAllRates` returns a fixed `[14]SkillsetScores`, ordered from 0.7x to 2.0x.
+The native ABI transparently keeps one reusable MinaCalc instance per calling
+OS thread, so callers do not manage handles and threads never share a calculator.
 
 Start from `DefaultConfig()` and call `CalcAtRateDetailed` or `CalcRates` for
 tuning and custom rate lists. Set `SsrRatingCap` to `nil` to disable the cap.
