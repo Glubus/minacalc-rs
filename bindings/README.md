@@ -20,6 +20,20 @@ cargo build --release -p minacalc-bindings
 Set `MINACALC_LIBRARY_PATH` to this file's absolute path. Go and .NET can also
 use their platform's normal linker and dynamic-loader search paths.
 
+Released versions provide the same files as archives on the corresponding
+GitHub Release. For example on Linux:
+
+```sh
+gh release download v515.2.0 -R Glubus/minacalc-rs \
+  -p 'minacalc-native-linux-x86_64.tar.gz'
+tar -xzf minacalc-native-linux-x86_64.tar.gz
+export MINACALC_LIBRARY_PATH="$PWD/libminacalc_bindings.so"
+```
+
+The language package supplies the typed wrapper; this native library supplies
+the calculator itself. Keeping them separate avoids downloading every platform
+binary in every npm, PyPI, NuGet, or Go installation.
+
 ## Chart input: bitmasks
 
 Each row has an absolute time in seconds and a `u32` bitmask of active columns.
@@ -42,6 +56,16 @@ Rows must be non-empty and ordered by time. MinaCalc supports 4K, 6K, and 7K.
 - [`csharp/`](csharp/README.md): .NET 8+.
 - [`go/`](go/README.md): Go 1.22+ with cgo.
 
-All wrappers expose `calc_at_rate`/`CalcAtRate` and
-`calc_all_rates`/`CalcAllRates`. The latter returns fourteen scores for rates
-0.7x through 2.0x, in 0.1x steps.
+All wrappers expose the original single/all-rate functions plus a validated
+`CalcConfig`, a custom-rates function, and a detailed single-rate result that
+contains the effective grind scaler. A null/omitted config retains Etterna's
+defaults; a nullable rating cap disables that cap cleanly.
+
+| Language | Install |
+| --- | --- |
+| TypeScript | `npm install @glubus/minacalc` |
+| Python | `python -m pip install minacalc` |
+| .NET | `dotnet add package Glubus.MinaCalc --version 0.2.0` |
+| Go | `go get github.com/Glubus/minacalc-rs/bindings/go@v0.2.0` |
+
+See each linked README for a complete single-rate and configurable example.

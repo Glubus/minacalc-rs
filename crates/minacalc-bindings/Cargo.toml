@@ -1,6 +1,6 @@
 [package]
 name = "minacalc-bindings"
-version = "515.1.1"
+version = "515.2.0"
 edition = "2021"
 description = "Stable C ABI for MinaCalc language bindings"
 license = "MIT"
@@ -13,4 +13,4 @@ categories = ["api-bindings", "game-development"]
 crate-type = ["cdylib", "staticlib", "rlib"]
 
 [dependencies]
-minacalc-rs = { path = "../minacalc-rs" }
+minacalc-rs = { version = "515.2.0", path = "../minacalc-rs" }

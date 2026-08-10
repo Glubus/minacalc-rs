@@ -1,16 +1,30 @@
 {
-  "name": "@minacalc/bindings",
-  "version": "0.1.0",
-  "private": true,
+  "name": "@glubus/minacalc",
+  "version": "0.2.0",
   "description": "TypeScript bindings for MinaCalc: Node.js, Bun, and Deno",
+  "license": "MIT",
+  "repository": {
+    "type": "git",
+    "url": "git+https://github.com/Glubus/minacalc-rs.git",
+    "directory": "bindings/typescript"
+  },
   "type": "module",
+  "files": ["dist", "src/bun.ts", "src/deno.ts", "src/shared.ts", "README.md"],
   "exports": {
-    "./node": "./src/node.ts",
+    "./node": {
+      "types": "./dist/node.d.ts",
+      "import": "./dist/node.js"
+    },
     "./bun": "./src/bun.ts",
     "./deno": "./src/deno.ts"
   },
   "engines": { "node": ">=20" },
-  "peerDependencies": { "koffi": "latest" },
+  "dependencies": { "koffi": "^3.1.1" },
   "devDependencies": { "@types/node": "latest", "typescript": "latest" },
-  "scripts": { "check": "tsc --noEmit" }
+  "scripts": {
+    "build": "tsc",
+    "check": "tsc --noEmit",
+    "prepack": "npm run build"
+  },
+  "publishConfig": { "access": "public" }
 }

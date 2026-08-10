@@ -3,15 +3,8 @@ set -eu
 
 script_dir=$(CDPATH= cd -- "$(dirname -- "$0")" && pwd)
 repository_root=$(CDPATH= cd -- "$script_dir/.." && pwd)
-patch_file="$repository_root/patches/minacalc-configurable-calc-settings.patch"
 
-if git -C "$repository_root" apply --check "$patch_file" 2>/dev/null; then
-    git -C "$repository_root" apply "$patch_file"
-    echo "Applied configurable calculator settings patch."
-elif git -C "$repository_root" apply --reverse --check "$patch_file" 2>/dev/null; then
-    echo "Configurable calculator settings patch is already applied."
-else
-    echo "Unable to apply $patch_file; the vendored MinaCalc sources have changed." >&2
-    echo "Resolve the patch against the new upstream version, then run the test suite." >&2
-    exit 1
-fi
+# build.rs copies pristine c_code into target/, applies the patch there,
+# compiles it, and removes the temporary source tree automatically.
+cargo build --manifest-path "$repository_root/Cargo.toml" -p minacalc-sys
+echo "Verified the temporary MinaCalc patch build; vendored sources were untouched."

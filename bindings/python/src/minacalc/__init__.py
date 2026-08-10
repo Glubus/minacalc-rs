@@ -39,6 +39,33 @@ class SkillsetScores:
     technical: float
 
 
+@dataclass(frozen=True)
+class SkillsetScalers:
+    stream: float = 1.0
+    jumpstream: float = 1.0
+    handstream: float = 1.0
+    stamina: float = 1.0
+    jackspeed: float = 1.0
+    chordjack: float = 1.0
+    technical: float = 1.0
+
+
+@dataclass(frozen=True)
+class CalcConfig:
+    ssr_goal_cap: float = 0.965
+    low_acc_cutoff: float = 0.9
+    ssr_rating_cap: float | None = 40.0
+    default_score_goal: float = 0.93
+    grind_scaling: bool = True
+    skillset_scalers: SkillsetScalers = SkillsetScalers()
+
+
+@dataclass(frozen=True)
+class DetailedResult:
+    scores: SkillsetScores
+    grind_scaler: float
+
+
 class _CNote(_ct.Structure):
     _fields_ = [("notes", _ct.c_uint32), ("row_time", _ct.c_float)]
 
@@ -49,6 +76,18 @@ class _CScores(_ct.Structure):
 
 class _CAllRates(_ct.Structure):
     _fields_ = [("rates", _CScores * 14)]
+
+
+class _CConfig(_ct.Structure):
+    _fields_ = [(name, _ct.c_float) for name in (
+        "ssr_goal_cap", "low_acc_cutoff", "ssr_rating_cap", "default_score_goal",
+        "stream_scaler", "jumpstream_scaler", "handstream_scaler", "stamina_scaler",
+        "jackspeed_scaler", "chordjack_scaler", "technical_scaler",
+    )] + [("grind_scaling", _ct.c_uint8), ("ssr_rating_cap_enabled", _ct.c_uint8), ("reserved", _ct.c_uint8 * 2)]
+
+
+class _CDetailed(_ct.Structure):
+    _fields_ = [("scores", _CScores), ("grind_scaler", _ct.c_float)]
 
 
 def _library_candidates() -> list[str]:
@@ -79,6 +118,10 @@ _lib.minacalc_calc_at_rate.argtypes = [_ct.POINTER(_CNote), _ct.c_size_t, _ct.c_
 _lib.minacalc_calc_at_rate.restype = _ct.c_int32
 _lib.minacalc_calc_all_rates.argtypes = [_ct.POINTER(_CNote), _ct.c_size_t, _ct.c_uint32, _ct.c_int32, _ct.POINTER(_CAllRates)]
 _lib.minacalc_calc_all_rates.restype = _ct.c_int32
+_lib.minacalc_calc_at_rate_with_config.argtypes = [_ct.POINTER(_CNote), _ct.c_size_t, _ct.c_float, _ct.c_float, _ct.c_uint32, _ct.c_int32, _ct.POINTER(_CConfig), _ct.POINTER(_CDetailed)]
+_lib.minacalc_calc_at_rate_with_config.restype = _ct.c_int32
+_lib.minacalc_calc_rates.argtypes = [_ct.POINTER(_CNote), _ct.c_size_t, _ct.POINTER(_ct.c_float), _ct.c_size_t, _ct.c_uint32, _ct.c_int32, _ct.POINTER(_CConfig), _ct.POINTER(_CScores)]
+_lib.minacalc_calc_rates.restype = _ct.c_int32
 
 
 def _check(status: int) -> None:
@@ -104,6 +147,15 @@ def _scores(value: _CScores) -> SkillsetScores:
     return SkillsetScores(*(getattr(value, name) for name in SkillsetScores.__annotations__))
 
 
+def _config(value: CalcConfig) -> _CConfig:
+    cap = value.ssr_rating_cap
+    scalers = value.skillset_scalers
+    return _CConfig(value.ssr_goal_cap, value.low_acc_cutoff, cap or 0.0,
+        value.default_score_goal, scalers.stream, scalers.jumpstream, scalers.handstream,
+        scalers.stamina, scalers.jackspeed, scalers.chordjack, scalers.technical,
+        value.grind_scaling, cap is not None, (0, 0))
+
+
 def version() -> int:
     """Return the linked MinaCalc engine version."""
     return int(_lib.minacalc_version())
@@ -125,4 +177,26 @@ def calc_all_rates(notes: Iterable[NoteInput], keys: int = 4, mode: CalcMode = "
     return tuple(_scores(score) for score in output.rates)
 
 
-__all__ = ["CalcMode", "MinaCalcError", "Note", "SkillsetScores", "calc_all_rates", "calc_at_rate", "version"]
+def calc_at_rate_detailed(notes: Iterable[NoteInput], rate: float, goal: float = 0.93,
+                          keys: int = 4, mode: CalcMode = "ssr",
+                          config: CalcConfig = CalcConfig()) -> DetailedResult:
+    prepared, native_config, output = _prepare(notes, keys), _config(config), _CDetailed()
+    _check(_lib.minacalc_calc_at_rate_with_config(prepared, len(prepared), rate, goal, keys,
+        0 if mode == "msd" else 1, _ct.byref(native_config), _ct.byref(output)))
+    return DetailedResult(_scores(output.scores), output.grind_scaler)
+
+
+def calc_rates(notes: Iterable[NoteInput], rates: Iterable[float], keys: int = 4,
+               mode: CalcMode = "msd", config: CalcConfig = CalcConfig()) -> tuple[SkillsetScores, ...]:
+    prepared, values, native_config = _prepare(notes, keys), tuple(rates), _config(config)
+    if not values:
+        raise ValueError("rates must not be empty")
+    native_rates, output = (_ct.c_float * len(values))(*values), (_CScores * len(values))()
+    _check(_lib.minacalc_calc_rates(prepared, len(prepared), native_rates, len(values), keys,
+        0 if mode == "msd" else 1, _ct.byref(native_config), output))
+    return tuple(_scores(score) for score in output)
+
+
+__all__ = ["CalcConfig", "CalcMode", "DetailedResult", "MinaCalcError", "Note",
+           "SkillsetScalers", "SkillsetScores", "calc_all_rates", "calc_at_rate",
+           "calc_at_rate_detailed", "calc_rates", "version"]

@@ -6,15 +6,13 @@ library's `ctypes`; it needs the native library built from this repository.
 ## Installation
 
 ```sh
-cargo build --release -p minacalc-bindings
-cd bindings/python
-python -m pip install .
+python -m pip install minacalc
 ```
 
 Tell Python where the resulting library lives:
 
 ```sh
-export MINACALC_LIBRARY_PATH="$PWD/../../target/release/libminacalc_bindings.so"
+export MINACALC_LIBRARY_PATH="$PWD/libminacalc_bindings.so"
 ```
 
 On macOS use `libminacalc_bindings.dylib`; on Windows use
@@ -59,3 +57,22 @@ The return value has 14 `SkillsetScores`, for 0.7x through 2.0x.
 Invalid calculator input raises `ValueError`; a failure reported by the native
 library raises `MinaCalcError`, whose `status` attribute contains the ABI code.
 The input must be non-empty; `keys` must be 4, 6, or 7.
+
+## Configuration and custom rates
+
+Pass a `CalcConfig` to `calc_at_rate_detailed` or `calc_rates`. Set
+`ssr_rating_cap=None` to disable the cap. Detailed results include the
+effective `grind_scaler`.
+
+```python
+from minacalc import CalcConfig, SkillsetScalers, calc_at_rate_detailed, calc_rates
+
+config = CalcConfig(
+    ssr_goal_cap=1.0,
+    ssr_rating_cap=None,
+    skillset_scalers=SkillsetScalers(stream=1.05),
+)
+detailed = calc_at_rate_detailed(notes, 1.0, goal=0.98, config=config)
+print(detailed.scores.overall, detailed.grind_scaler)
+print(calc_rates(notes, [0.85, 1.0, 1.25], config=config))
+```

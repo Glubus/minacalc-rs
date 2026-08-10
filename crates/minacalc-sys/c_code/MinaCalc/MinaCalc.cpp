@@ -189,13 +189,14 @@ Calc::CalcMain(const std::vector<NoteInfo>& NoteInfo,
 		 * 38 is still unachieved so a cap of 40 [sic] is _extremely_ generous
 		 * do this for SCORES only, not cached file difficulties */
 		if (ssr) {
+			static const auto ssrcap = 40.F;
 			for (auto& r : iteration_skillet_values) {
 				// so 50%s on 60s don't give 35s
-				r = downscale_low_accuracy_scores(r, score_goal, low_acc_cutoff);
-				r = std::min(r, ssr_rating_cap);
+				r = downscale_low_accuracy_scores(r, score_goal);
+				r = std::min(r, ssrcap);
 
 				if (highest_stam_adjusted_skillset == Skill_JackSpeed) {
-					r = downscale_low_accuracy_scores(r, score_goal, low_acc_cutoff);
+					r = downscale_low_accuracy_scores(r, score_goal);
 				}
 			}
 		}
@@ -236,7 +237,7 @@ Calc::CalcMain(const std::vector<NoteInfo>& NoteInfo,
 			highest_final_ssv = output[i];
 		}
 	}
-	if (ssr && grind_scaling_enabled) {
+	if (ssr) {
 		if (highest_final_ss == Skill_JackSpeed ||
 			highest_final_ss == Skill_Chordjack)
 			grindscaler = fastsqrt(grindscaler);
@@ -884,10 +885,7 @@ MinaSDCalc(const std::vector<NoteInfo>& NoteInfo,
 	calc->debugmode = false;
 	calc->keycount = keycount;
 
-	return calc->CalcMain(
-	  NoteInfo,
-	  musicrate,
-	  min(goal, ssr_mode ? calc->ssr_goal_cap : msd_score_goal));
+	return calc->CalcMain(NoteInfo, musicrate, min(goal, ssr_mode ? ssr_goal_cap : default_score_goal));
 }
 
 // Wrap difficulty calculation for all standard rates
@@ -907,9 +905,7 @@ MinaSDCalc(const std::vector<NoteInfo>& NoteInfo,
 		calc->keycount = keycount;
 		for (auto i = lower_rate; i < upper_rate; i++) {
 			allrates.emplace_back(calc->CalcMain(
-			  NoteInfo,
-			  static_cast<float>(i) / 10.F,
-			  ssr_mode ? calc->default_score_goal : msd_score_goal));
+			  NoteInfo, static_cast<float>(i) / 10.F, default_score_goal));
 		}
 	} else {
 		for (auto i = lower_rate; i < upper_rate; i++) {
@@ -938,7 +934,7 @@ MinaSDCalcDebug(
 	calc.debugmode = true;
 	calc.ssr = true;
 	calc.keycount = keycount;
-	calc.CalcMain(NoteInfo, musicrate, min(goal, calc.ssr_goal_cap));
+	calc.CalcMain(NoteInfo, musicrate, min(goal, ssr_goal_cap));
 	make_debug_strings(calc, debugstrings);
 
 	handInfo.emplace_back(calc.debugValues.at(left_hand));
@@ -1002,7 +998,7 @@ webcalc(Php::Parameters& parameters)
 			ssr =
 			  calc->CalcMain(newVector,
 							 rate,
-							 std::min(wife, static_cast<double>(calc->ssr_goal_cap)));
+							 std::min(wife, static_cast<double>(ssr_goal_cap)));
 		} catch (std::exception& e) {
 			throw Php::Exception(e.what());
 		}

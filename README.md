@@ -22,12 +22,13 @@ vendored and compiled as part of `minacalc-sys`.
 - Rust with Cargo (edition 2021 or newer)
 - A C++20 compiler
 - `libclang`, used by bindgen
+- Git, used to patch only the temporary native build copy
 
 ## Rust installation
 
 ```toml
 [dependencies]
-minacalc-rs = "515.1"
+minacalc-rs = "515.2"
 ```
 
 The major version follows the MinaCalc algorithm version: `515.x` wraps
@@ -88,18 +89,22 @@ Every result contains `overall`, `stream`, `jumpstream`, `handstream`,
 
 ## Configurable calculator settings
 
-Settings belong to a calculator instance and retain Etterna's defaults unless
-changed:
+Use one validated configuration instead of applying unrelated setters:
 
 ```rust
-# use minacalc_rs::Calc;
+# use minacalc_rs::{Calc, CalcConfig, SkillsetScalers};
 # fn configure() -> Result<(), minacalc_rs::Error> {
-let mut calc = Calc::new()?;
-calc.set_ssr_goal_cap(1.0);    // default: 0.965
-calc.set_low_acc_cutoff(0.85); // default: 0.9
-calc.set_ssr_rating_cap(100.0); // default: 40.0
-calc.set_default_score_goal(0.95); // default: 0.93, all-rates SSR only
-calc.set_grind_scaling_enabled(false); // default: true
+let config = CalcConfig {
+    ssr_goal_cap: 1.0,
+    low_acc_cutoff: 0.85,
+    ssr_rating_cap: None, // no cap; default is Some(40.0)
+    default_score_goal: 0.95,
+    grind_scaling: false,
+    skillset_scalers: SkillsetScalers { stream: 1.05, ..Default::default() },
+};
+let mut calc = Calc::with_config(config)?;
+assert_eq!(calc.config(), config);
+calc.reset_config();
 # Ok(())
 # }
 ```
@@ -110,6 +115,9 @@ values are downscaled. `set_ssr_rating_cap` changes the cap applied to individua
 SSR skillsets before overall aggregation. `set_default_score_goal` controls
 `calc_all_rates` in SSR mode without affecting MSD. Disabling grind scaling
 removes the short/inconsistently-dense chart penalty from SSR results.
+Invalid, non-finite, negative, or out-of-range values return an error. Use
+`calc_rates` for arbitrary rate lists and `calc_at_rate_detailed` to retrieve
+the effective grind scaler alongside the scores.
 
 `Calc` is not `Send` or `Sync` because the underlying C++ instance is not
 thread-safe. Create one calculator per thread; see
@@ -133,6 +141,9 @@ cargo build --release -p minacalc-bindings
 See the [bindings guide](bindings/README.md) for library names and loading
 instructions.
 
+Maintainers can publish all registries and native binaries from one version tag;
+see [RELEASING.md](RELEASING.md) for the required environments and credentials.
+
 ## Development
 
 ```sh
@@ -141,16 +152,21 @@ cargo run -p minacalc-rs --example single_rate
 cargo run -p minacalc-rs --example all_rates
 ```
 
-After updating the vendored MinaCalc sources, reapply the local adaptations for
-configurable calculator settings and run the tests:
+The checked-in `c_code` directory stays identical to upstream MinaCalc. During
+`minacalc-sys` compilation, `build.rs` copies it under Cargo's `OUT_DIR` in
+`target/`, applies the versioned
+[`configurable-calc.patch`](crates/minacalc-sys/patches/configurable-calc.patch),
+compiles and runs bindgen against that copy, then removes the patched source
+tree. After updating the vendored sources, verify that the patch still applies:
 
 ```sh
 just patch-minacalc
 just test
 ```
 
-The patch command is idempotent and reports when an upstream change requires a
-manual conflict resolution. Details are in [`patches/README.md`](patches/README.md).
+This never writes into the vendored source directory. A patch conflict fails the
+build and identifies the patch that must be rebased. Details are in
+[`patches/README.md`](patches/README.md).
 
 ## License
 

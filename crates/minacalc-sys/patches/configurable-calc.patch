@@ -1,0 +1,312 @@
+diff --git a/crates/minacalc-sys/c_code/API.cpp b/crates/minacalc-sys/c_code/API.cpp
+index 322df90..e983d19 100644
+--- a/crates/minacalc-sys/c_code/API.cpp
++++ b/crates/minacalc-sys/c_code/API.cpp
+@@ -31,6 +31,38 @@ extern "C" {
+ 		delete reinterpret_cast<Calc*>(calc);
+ 	}
+ 
++	void set_ssr_goal_cap(CalcHandle *calc, float goal_cap) {
++		reinterpret_cast<Calc*>(calc)->SetSsrGoalCap(goal_cap);
++	}
++
++	void set_low_acc_cutoff(CalcHandle *calc, float cutoff) {
++		reinterpret_cast<Calc*>(calc)->SetLowAccCutoff(cutoff);
++	}
++
++	void set_ssr_rating_cap(CalcHandle *calc, float rating_cap) {
++		reinterpret_cast<Calc*>(calc)->SetSsrRatingCap(rating_cap);
++	}
++
++	void set_ssr_rating_cap_enabled(CalcHandle *calc, bool enabled) {
++		reinterpret_cast<Calc*>(calc)->SetSsrRatingCapEnabled(enabled);
++	}
++
++	void set_default_score_goal(CalcHandle *calc, float score_goal) {
++		reinterpret_cast<Calc*>(calc)->SetDefaultScoreGoal(score_goal);
++	}
++
++	void set_grind_scaling_enabled(CalcHandle *calc, bool enabled) {
++		reinterpret_cast<Calc*>(calc)->SetGrindScalingEnabled(enabled);
++	}
++
++	void set_skillset_scaler(CalcHandle *calc, unsigned int skillset, float scaler) {
++		reinterpret_cast<Calc*>(calc)->SetSkillsetScaler(skillset, scaler);
++	}
++
++	float get_last_grind_scaler(const CalcHandle *calc) {
++		return reinterpret_cast<const Calc*>(calc)->GetLastGrindScaler();
++	}
++
+ 
+ 
+ 
+@@ -54,7 +86,7 @@ extern "C" {
+ 		return all_rates;
+ 	}
+ 
+-	Ssr calc_at_rate(CalcHandle *calc, NoteInfo *rows, size_t num_rows, float music_rate, float score_goal, unsigned int keycount, CalcMode mode) {
++	Ssr calc_at_rate(CalcHandle *calc, const NoteInfo *rows, size_t num_rows, float music_rate, float score_goal, unsigned int keycount, CalcMode mode) {
+ 		std::vector<NoteInfo> note_info(rows, rows + num_rows);
+ 
+ 		auto skillsets = MinaSDCalc(
+@@ -69,4 +101,17 @@ extern "C" {
+ 		return skillset_vector_to_ssr(skillsets);
+ 	}
+ 
++	void calc_rates(CalcHandle *calc, const NoteInfo *rows, size_t num_rows,
++					const float *rates, size_t num_rates, unsigned int keycount,
++					CalcMode mode, Ssr *out_scores) {
++		std::vector<NoteInfo> note_info(rows, rows + num_rows);
++		auto *calculator = reinterpret_cast<Calc*>(calc);
++		for (size_t i = 0; i < num_rates; ++i) {
++			auto skillsets = MinaSDCalc(note_info, rates[i],
++				calculator->default_score_goal, keycount,
++				mode == CalcMode::SSR, calculator);
++			out_scores[i] = skillset_vector_to_ssr(skillsets);
++		}
++	}
++
+ }
+diff --git a/crates/minacalc-sys/c_code/API.h b/crates/minacalc-sys/c_code/API.h
+index 25048d1..4ecaaeb 100644
+--- a/crates/minacalc-sys/c_code/API.h
++++ b/crates/minacalc-sys/c_code/API.h
+@@ -39,12 +39,41 @@ CalcHandle *create_calc();
+ 
+ void destroy_calc(CalcHandle *calc);
+ 
++// Changes the maximum score goal used for SSR calculations.
++void set_ssr_goal_cap(CalcHandle *calc, float goal_cap);
++
++// Changes the score threshold below which SSR values are downscaled.
++void set_low_acc_cutoff(CalcHandle *calc, float cutoff);
++
++// Changes the maximum value applied to individual SSR skillsets.
++void set_ssr_rating_cap(CalcHandle *calc, float rating_cap);
++
++// Enables or disables the individual SSR skillset cap.
++void set_ssr_rating_cap_enabled(CalcHandle *calc, bool enabled);
++
++// Changes the score goal used by all-rates calculations.
++void set_default_score_goal(CalcHandle *calc, float score_goal);
++
++// Enables or disables the SSR grind scaling penalty.
++void set_grind_scaling_enabled(CalcHandle *calc, bool enabled);
++
++// Changes the final multiplier for a non-overall skillset (indices 1 through 7).
++void set_skillset_scaler(CalcHandle *calc, unsigned int skillset, float scaler);
++
++// Returns the grind multiplier applied by the most recent calculation.
++float get_last_grind_scaler(const CalcHandle *calc);
++
+ // Calculates difficulty for all rates (0.7x - 2.0x)
+ MsdForAllRates calc_all_rates(CalcHandle *calc, const NoteInfo *rows, size_t num_rows, unsigned int keycount, CalcMode mode);
+ 
+ // Calculates difficulty at a specific rate
+ // score_goal: relevant for SSR (usually 0.93), ignored for MSD
+-Ssr calc_at_rate(CalcHandle *calc, NoteInfo *rows, size_t num_rows, float music_rate, float score_goal, unsigned int keycount, CalcMode mode);
++Ssr calc_at_rate(CalcHandle *calc, const NoteInfo *rows, size_t num_rows, float music_rate, float score_goal, unsigned int keycount, CalcMode mode);
++
++// Calculates difficulty for caller-supplied rates. `out_scores` has num_rates entries.
++void calc_rates(CalcHandle *calc, const NoteInfo *rows, size_t num_rows,
++                const float *rates, size_t num_rates, unsigned int keycount,
++                CalcMode mode, Ssr *out_scores);
+ 
+ #ifdef __cplusplus
+ }
+diff --git a/crates/minacalc-sys/c_code/MinaCalc/MinaCalc.cpp b/crates/minacalc-sys/c_code/MinaCalc/MinaCalc.cpp
+index 7968349..5af1b80 100644
+--- a/crates/minacalc-sys/c_code/MinaCalc/MinaCalc.cpp
++++ b/crates/minacalc-sys/c_code/MinaCalc/MinaCalc.cpp
+@@ -52,6 +52,7 @@ Calc::CalcMain(const std::vector<NoteInfo>& NoteInfo,
+ 			   const float music_rate,
+ 			   const float score_goal) -> std::vector<float>
+ {
++	last_grind_scaler = 1.F;
+ 
+ 	InitializeKeycountLogic();
+ 	const auto& basescalers = ulbu_in_charge->get_basescalers();
+@@ -184,19 +185,25 @@ Calc::CalcMain(const std::vector<NoteInfo>& NoteInfo,
+ 			}
+ 		}
+ 
++		if (skillset_scaling_enabled) {
++			for (auto ss = 1; ss < NUM_Skillset; ++ss) {
++				iteration_skillet_values[ss] *= skillset_scalers[ss];
++			}
++		}
++
+ 		/* the final push down, cap ssrs (score specific ratings) to stop vibro
+ 		 * garbage and calc abuse from polluting leaderboards too much, a "true"
+ 		 * 38 is still unachieved so a cap of 40 [sic] is _extremely_ generous
+ 		 * do this for SCORES only, not cached file difficulties */
+ 		if (ssr) {
+-			static const auto ssrcap = 40.F;
+ 			for (auto& r : iteration_skillet_values) {
+ 				// so 50%s on 60s don't give 35s
+-				r = downscale_low_accuracy_scores(r, score_goal);
+-				r = std::min(r, ssrcap);
++				r = downscale_low_accuracy_scores(r, score_goal, low_acc_cutoff);
++				if (ssr_rating_cap_enabled)
++					r = std::min(r, ssr_rating_cap);
+ 
+ 				if (highest_stam_adjusted_skillset == Skill_JackSpeed) {
+-					r = downscale_low_accuracy_scores(r, score_goal);
++					r = downscale_low_accuracy_scores(r, score_goal, low_acc_cutoff);
+ 				}
+ 			}
+ 		}
+@@ -237,12 +244,13 @@ Calc::CalcMain(const std::vector<NoteInfo>& NoteInfo,
+ 			highest_final_ssv = output[i];
+ 		}
+ 	}
+-	if (ssr) {
++	if (ssr && grind_scaling_enabled) {
+ 		if (highest_final_ss == Skill_JackSpeed ||
+ 			highest_final_ss == Skill_Chordjack)
+ 			grindscaler = fastsqrt(grindscaler);
+ 		for (auto& ssv : output)
+ 			ssv *= grindscaler;
++		last_grind_scaler = grindscaler;
+ 	}
+ 	return output;
+ }
+@@ -885,7 +893,10 @@ MinaSDCalc(const std::vector<NoteInfo>& NoteInfo,
+ 	calc->debugmode = false;
+ 	calc->keycount = keycount;
+ 
+-	return calc->CalcMain(NoteInfo, musicrate, min(goal, ssr_mode ? ssr_goal_cap : default_score_goal));
++	return calc->CalcMain(
++	  NoteInfo,
++	  musicrate,
++	  min(goal, ssr_mode ? calc->ssr_goal_cap : msd_score_goal));
+ }
+ 
+ // Wrap difficulty calculation for all standard rates
+@@ -896,6 +907,7 @@ MinaSDCalc(const std::vector<NoteInfo>& NoteInfo,
+ 		   Calc* calc) -> MinaSD
+ {
+ 	MinaSD allrates;
++	allrates.reserve(14);
+ 	const auto lower_rate = 7; // 0.7x
+ 	const auto upper_rate = 21; // up to 2.1x (not including 2.1x)
+ 
+@@ -905,7 +917,9 @@ MinaSDCalc(const std::vector<NoteInfo>& NoteInfo,
+ 		calc->keycount = keycount;
+ 		for (auto i = lower_rate; i < upper_rate; i++) {
+ 			allrates.emplace_back(calc->CalcMain(
+-			  NoteInfo, static_cast<float>(i) / 10.F, default_score_goal));
++			  NoteInfo,
++			  static_cast<float>(i) / 10.F,
++			  ssr_mode ? calc->default_score_goal : msd_score_goal));
+ 		}
+ 	} else {
+ 		for (auto i = lower_rate; i < upper_rate; i++) {
+@@ -934,7 +948,7 @@ MinaSDCalcDebug(
+ 	calc.debugmode = true;
+ 	calc.ssr = true;
+ 	calc.keycount = keycount;
+-	calc.CalcMain(NoteInfo, musicrate, min(goal, ssr_goal_cap));
++	calc.CalcMain(NoteInfo, musicrate, min(goal, calc.ssr_goal_cap));
+ 	make_debug_strings(calc, debugstrings);
+ 
+ 	handInfo.emplace_back(calc.debugValues.at(left_hand));
+@@ -998,7 +1012,7 @@ webcalc(Php::Parameters& parameters)
+ 			ssr =
+ 			  calc->CalcMain(newVector,
+ 							 rate,
+-							 std::min(wife, static_cast<double>(ssr_goal_cap)));
++							 std::min(wife, static_cast<double>(calc->ssr_goal_cap)));
+ 		} catch (std::exception& e) {
+ 			throw Php::Exception(e.what());
+ 		}
+diff --git a/crates/minacalc-sys/c_code/MinaCalc/MinaCalc.h b/crates/minacalc-sys/c_code/MinaCalc/MinaCalc.h
+index 03e3f6a..0448bcd 100644
+--- a/crates/minacalc-sys/c_code/MinaCalc/MinaCalc.h
++++ b/crates/minacalc-sys/c_code/MinaCalc/MinaCalc.h
+@@ -81,6 +81,32 @@ struct RowInfo
+ class Calc
+ {
+   public:
++	/// Change the maximum score goal used for SSR calculations.
++	void SetSsrGoalCap(float goal_cap) { ssr_goal_cap = goal_cap; }
++	/// Change the score threshold below which SSR values are downscaled.
++	void SetLowAccCutoff(float cutoff) { low_acc_cutoff = cutoff; }
++	/// Change the maximum value applied to individual SSR skillsets.
++	void SetSsrRatingCap(float rating_cap) { ssr_rating_cap = rating_cap; ssr_rating_cap_enabled = true; }
++	/// Enable or disable the maximum SSR skillset value.
++	void SetSsrRatingCapEnabled(bool enabled) { ssr_rating_cap_enabled = enabled; }
++	/// Change the score goal used by all-rates calculations.
++	void SetDefaultScoreGoal(float score_goal) { default_score_goal = score_goal; }
++	/// Enable or disable the SSR grind scaling penalty.
++	void SetGrindScalingEnabled(bool enabled) { grind_scaling_enabled = enabled; }
++	/// Change the final multiplier for one non-overall skillset.
++	void SetSkillsetScaler(unsigned skillset, float scaler) {
++		skillset_scalers.at(skillset) = scaler;
++		skillset_scaling_enabled = false;
++		for (auto i = 1; i < NUM_Skillset; ++i) {
++			if (skillset_scalers[i] != 1.F) {
++				skillset_scaling_enabled = true;
++				break;
++			}
++		}
++	}
++	/// Return the grind multiplier applied by the most recent calculation.
++	float GetLastGrindScaler() const { return last_grind_scaler; }
++
+ 	/** Primary calculator function that wraps everything else. Runs notedata
+ 	* through ulbu which builds the base diff values and then runs the chisel
+ 	* function over the produced diff vectors for each skillset. The main
+@@ -100,6 +126,25 @@ class Calc
+ 	/// Set true to force calc params to load outside debug mode.
+ 	bool loadparams = false;
+ 
++	/// Maximum score goal accepted by SSR calculations.
++	float ssr_goal_cap = 0.965F;
++	/// Score threshold below which SSR values are downscaled.
++	float low_acc_cutoff = 0.9F;
++	/// Maximum value applied to individual SSR skillsets before aggregation.
++	float ssr_rating_cap = 40.F;
++	/// Whether the SSR skillset cap is applied.
++	bool ssr_rating_cap_enabled = true;
++	/// Score goal used by all-rates calculations.
++	float default_score_goal = 0.93F;
++	/// Whether SSR values are multiplied by the grind scaler.
++	bool grind_scaling_enabled = true;
++	/// Final per-skillset multipliers (Overall is calculated after these).
++	std::array<float, NUM_Skillset> skillset_scalers = { 1.F, 1.F, 1.F, 1.F, 1.F, 1.F, 1.F, 1.F };
++	/// Avoid any scaling work for the upstream-compatible default.
++	bool skillset_scaling_enabled = false;
++	/// Grind multiplier applied by the most recent calculation.
++	float last_grind_scaler = 1.F;
++
+ 	/// Assigns the keymode specific logic
+ 	unsigned keycount = 4;
+ 	std::array<unsigned, num_hands> hand_col_masks = { 0U, 0U };
+diff --git a/crates/minacalc-sys/c_code/MinaCalc/MinaCalcHelpers.h b/crates/minacalc-sys/c_code/MinaCalc/MinaCalcHelpers.h
+index 5b6fecf..0662f02 100644
+--- a/crates/minacalc-sys/c_code/MinaCalc/MinaCalcHelpers.h
++++ b/crates/minacalc-sys/c_code/MinaCalc/MinaCalcHelpers.h
+@@ -6,9 +6,7 @@
+ 
+ constexpr float max_rating = 100.F;
+ constexpr float min_rating = 0.F;
+-constexpr float default_score_goal = 0.93F;
+-constexpr float low_acc_cutoff = 0.9F;
+-constexpr float ssr_goal_cap = 0.965F;
++constexpr float msd_score_goal = 0.93F;
+ 
+ static const std::vector<float> dimples_the_all_zero_output{
+ 	min_rating, min_rating, min_rating, min_rating,
+@@ -22,7 +20,9 @@ static const std::vector<float> gertrude_the_all_max_output{
+ };
+ 
+ inline auto
+-downscale_low_accuracy_scores(const float f, const float sg) -> float
++downscale_low_accuracy_scores(const float f,
++							  const float sg,
++							  const float low_acc_cutoff) -> float
+ {
+ 	return sg >= low_acc_cutoff
+ 			 ? f

@@ -8,7 +8,7 @@ difficulty calculator used by [Etterna](https://etternaonline.com). It builds on
 
 ```toml
 [dependencies]
-minacalc-rs = "515.1"
+minacalc-rs = "515.2"
 ```
 
 The major version follows the MinaCalc algorithm version. `515.x` wraps
@@ -17,17 +17,14 @@ MinaCalc v515.
 ## Usage
 
 ```rust
-use minacalc_rs::{Calc, CalcMode, Note};
+use minacalc_rs::{Calc, CalcConfig, CalcMode, Note};
 
 fn main() -> Result<(), Box<dyn std::error::Error>> {
-    let mut calc = Calc::new()?;
-
-    // Optional per-instance overrides.
-    calc.set_ssr_goal_cap(1.0);
-    calc.set_low_acc_cutoff(0.85);
-    calc.set_ssr_rating_cap(100.0);
-    calc.set_default_score_goal(0.95);
-    calc.set_grind_scaling_enabled(false);
+    let calc = Calc::with_config(CalcConfig {
+        ssr_goal_cap: 1.0,
+        ssr_rating_cap: None,
+        ..CalcConfig::default()
+    })?;
 
     let notes = vec![
         Note {
@@ -62,11 +59,15 @@ fn main() -> Result<(), Box<dyn std::error::Error>> {
 
 - `Calc::calc_at_rate`: calculate one music rate.
 - `Calc::calc_all_rates`: calculate fourteen rates from 0.7x through 2.0x.
+- `Calc::calc_rates`: calculate an arbitrary list of positive rates.
+- `Calc::calc_at_rate_detailed`: return scores and the applied grind scaler.
+- `Calc::with_config`, `config`, `set_config`, and `reset_config`: manage a
+  validated `CalcConfig` as one unit.
 - `Calc::set_ssr_goal_cap`: change the SSR score-goal cap (`0.965` by default).
 - `Calc::set_low_acc_cutoff`: change the low-accuracy downscaling threshold
   (`0.9` by default).
-- `Calc::set_ssr_rating_cap`: change the per-skillset SSR rating cap (`40.0` by
-  default; overall aggregation happens afterward).
+- `Calc::set_ssr_rating_cap`: change the per-skillset SSR rating cap (`Some(40.0)`
+  by default, `None` disables it; overall aggregation happens afterward).
 - `Calc::set_default_score_goal`: change the score goal used by all-rates SSR
   calculations (`0.93` by default); MSD is unaffected.
 - `Calc::set_grind_scaling_enabled`: enable or disable the SSR penalty for
@@ -87,6 +88,7 @@ seconds. MinaCalc supports 4K, 6K, and 7K.
 - Rust with Cargo
 - A C++20 compiler
 - `libclang` for bindgen
+- Git for applying the native patch inside Cargo's temporary build directory
 
 ## License
 

@@ -1,2 +1,8 @@
 /target
 /.claude/
+/bindings/csharp/MinaCalc/bin/
+/bindings/csharp/MinaCalc/obj/
+/bindings/python/dist/
+/bindings/python/src/minacalc/__pycache__/
+/bindings/typescript/dist/
+/bindings/typescript/*.tgz

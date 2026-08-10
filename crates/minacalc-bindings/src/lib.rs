@@ -5,7 +5,7 @@
 
 use std::panic::{catch_unwind, AssertUnwindSafe};
 
-use minacalc_rs::{Calc, CalcMode, Note, SkillsetScores};
+use minacalc_rs::{Calc, CalcConfig, CalcMode, Note, SkillsetScalers, SkillsetScores};
 
 /// A note row consumed by the C ABI.
 #[repr(C)]
@@ -34,6 +34,76 @@ pub struct MinaCalcScores {
 #[derive(Clone, Copy, Debug)]
 pub struct MinaCalcAllRates {
     pub rates: [MinaCalcScores; 14],
+}
+
+/// ABI-safe calculator configuration. Use [`minacalc_default_config`].
+#[repr(C)]
+#[derive(Clone, Copy, Debug)]
+pub struct MinaCalcConfig {
+    pub ssr_goal_cap: f32,
+    pub low_acc_cutoff: f32,
+    pub ssr_rating_cap: f32,
+    pub default_score_goal: f32,
+    pub stream_scaler: f32,
+    pub jumpstream_scaler: f32,
+    pub handstream_scaler: f32,
+    pub stamina_scaler: f32,
+    pub jackspeed_scaler: f32,
+    pub chordjack_scaler: f32,
+    pub technical_scaler: f32,
+    pub grind_scaling: u8,
+    pub ssr_rating_cap_enabled: u8,
+    pub reserved: [u8; 2],
+}
+
+/// Scores and the effective grind multiplier from one calculation.
+#[repr(C)]
+#[derive(Clone, Copy, Debug, Default)]
+pub struct MinaCalcDetailedResult {
+    pub scores: MinaCalcScores,
+    pub grind_scaler: f32,
+}
+
+impl From<MinaCalcConfig> for CalcConfig {
+    fn from(value: MinaCalcConfig) -> Self {
+        Self {
+            ssr_goal_cap: value.ssr_goal_cap,
+            low_acc_cutoff: value.low_acc_cutoff,
+            ssr_rating_cap: (value.ssr_rating_cap_enabled != 0).then_some(value.ssr_rating_cap),
+            default_score_goal: value.default_score_goal,
+            grind_scaling: value.grind_scaling != 0,
+            skillset_scalers: SkillsetScalers {
+                stream: value.stream_scaler,
+                jumpstream: value.jumpstream_scaler,
+                handstream: value.handstream_scaler,
+                stamina: value.stamina_scaler,
+                jackspeed: value.jackspeed_scaler,
+                chordjack: value.chordjack_scaler,
+                technical: value.technical_scaler,
+            },
+        }
+    }
+}
+
+impl From<CalcConfig> for MinaCalcConfig {
+    fn from(value: CalcConfig) -> Self {
+        Self {
+            ssr_goal_cap: value.ssr_goal_cap,
+            low_acc_cutoff: value.low_acc_cutoff,
+            ssr_rating_cap: value.ssr_rating_cap.unwrap_or(0.0),
+            default_score_goal: value.default_score_goal,
+            stream_scaler: value.skillset_scalers.stream,
+            jumpstream_scaler: value.skillset_scalers.jumpstream,
+            handstream_scaler: value.skillset_scalers.handstream,
+            stamina_scaler: value.skillset_scalers.stamina,
+            jackspeed_scaler: value.skillset_scalers.jackspeed,
+            chordjack_scaler: value.skillset_scalers.chordjack,
+            technical_scaler: value.skillset_scalers.technical,
+            grind_scaling: u8::from(value.grind_scaling),
+            ssr_rating_cap_enabled: u8::from(value.ssr_rating_cap.is_some()),
+            reserved: [0; 2],
+        }
+    }
 }
 
 /// Status returned by every fallible FFI function.
@@ -96,18 +166,31 @@ unsafe fn notes_from_raw<'a>(
     Ok(unsafe { std::slice::from_raw_parts(notes, len) })
 }
 
+unsafe fn config_from_raw(config: *const MinaCalcConfig) -> Result<CalcConfig, MinaCalcStatus> {
+    if config.is_null() {
+        return Ok(CalcConfig::default());
+    }
+    // SAFETY: callers promise a readable, aligned configuration value.
+    let config: CalcConfig = unsafe { config.read() }.into();
+    config
+        .validate()
+        .map_err(|_| MinaCalcStatus::InvalidArgument)?;
+    Ok(config)
+}
+
 fn calculate_at_rate(
     notes: &[MinaCalcNote],
     rate: f32,
     goal: f32,
     keys: u32,
     mode: i32,
+    config: CalcConfig,
 ) -> Result<MinaCalcScores, MinaCalcStatus> {
     if !rate.is_finite() || !goal.is_finite() {
         return Err(MinaCalcStatus::InvalidArgument);
     }
     validate(notes, keys)?;
-    let calc = Calc::new().map_err(|_| MinaCalcStatus::AllocationFailed)?;
+    let calc = Calc::with_config(config).map_err(|_| MinaCalcStatus::InvalidArgument)?;
     let notes: Vec<Note> = notes
         .iter()
         .map(|note| Note {
@@ -124,9 +207,10 @@ fn calculate_all_rates(
     notes: &[MinaCalcNote],
     keys: u32,
     mode: i32,
+    config: CalcConfig,
 ) -> Result<MinaCalcAllRates, MinaCalcStatus> {
     validate(notes, keys)?;
-    let calc = Calc::new().map_err(|_| MinaCalcStatus::AllocationFailed)?;
+    let calc = Calc::with_config(config).map_err(|_| MinaCalcStatus::InvalidArgument)?;
     let notes: Vec<Note> = notes
         .iter()
         .map(|note| Note {
@@ -146,6 +230,12 @@ fn calculate_all_rates(
 #[no_mangle]
 pub extern "C" fn minacalc_version() -> i32 {
     Calc::version()
+}
+
+/// Return the upstream-compatible default configuration.
+#[no_mangle]
+pub extern "C" fn minacalc_default_config() -> MinaCalcConfig {
+    CalcConfig::default().into()
 }
 
 /// Calculates one music rate.
@@ -175,7 +265,7 @@ pub unsafe extern "C" fn minacalc_calc_at_rate(
     }
     match catch_unwind(AssertUnwindSafe(|| {
         let notes = unsafe { notes_from_raw(notes, len) }?;
-        calculate_at_rate(notes, rate, goal, keys, mode)
+        calculate_at_rate(notes, rate, goal, keys, mode, CalcConfig::default())
     })) {
         Ok(Ok(scores)) => {
             // SAFETY: pointer nullability was checked and caller owns writable output.
@@ -209,11 +299,114 @@ pub unsafe extern "C" fn minacalc_calc_all_rates(
     }
     match catch_unwind(AssertUnwindSafe(|| {
         let notes = unsafe { notes_from_raw(notes, len) }?;
-        calculate_all_rates(notes, keys, mode)
+        calculate_all_rates(notes, keys, mode, CalcConfig::default())
     })) {
         Ok(Ok(scores)) => {
             // SAFETY: pointer nullability was checked and caller owns writable output.
             unsafe { out_scores.write(scores) };
+            MinaCalcStatus::Ok
+        }
+        Ok(Err(status)) => status,
+        Err(_) => MinaCalcStatus::Panic,
+    }
+}
+
+/// Configurable variant of [`minacalc_calc_at_rate`]. A null config uses defaults.
+///
+/// # Safety
+///
+/// All non-null pointers must be aligned and readable/writable for their stated
+/// lengths. Output storage must remain exclusively writable for the call.
+#[no_mangle]
+pub unsafe extern "C" fn minacalc_calc_at_rate_with_config(
+    notes: *const MinaCalcNote,
+    len: usize,
+    rate: f32,
+    goal: f32,
+    keys: u32,
+    mode: i32,
+    config: *const MinaCalcConfig,
+    out_result: *mut MinaCalcDetailedResult,
+) -> MinaCalcStatus {
+    if out_result.is_null() {
+        return MinaCalcStatus::NullPointer;
+    }
+    match catch_unwind(AssertUnwindSafe(|| {
+        let notes = unsafe { notes_from_raw(notes, len) }?;
+        let config = unsafe { config_from_raw(config) }?;
+        if !rate.is_finite() || !goal.is_finite() {
+            return Err(MinaCalcStatus::InvalidArgument);
+        }
+        validate(notes, keys)?;
+        let notes: Vec<Note> = notes
+            .iter()
+            .map(|note| Note {
+                notes: note.notes,
+                row_time: note.row_time,
+            })
+            .collect();
+        let calc = Calc::with_config(config).map_err(|_| MinaCalcStatus::InvalidArgument)?;
+        let result = calc
+            .calc_at_rate_detailed(&notes, rate, goal, keys, mode_from_raw(mode)?)
+            .map_err(|_| MinaCalcStatus::InvalidArgument)?;
+        Ok(MinaCalcDetailedResult {
+            scores: result.scores.into(),
+            grind_scaler: result.grind_scaler,
+        })
+    })) {
+        Ok(Ok(result)) => {
+            unsafe { out_result.write(result) };
+            MinaCalcStatus::Ok
+        }
+        Ok(Err(status)) => status,
+        Err(_) => MinaCalcStatus::Panic,
+    }
+}
+
+/// Calculate an arbitrary list of rates with one configuration.
+///
+/// # Safety
+///
+/// `notes`, `rates`, and `out_scores` must reference aligned storage containing
+/// `len`, `rate_count`, and `rate_count` elements respectively. A non-null
+/// `config` must point to one initialized [`MinaCalcConfig`].
+#[no_mangle]
+pub unsafe extern "C" fn minacalc_calc_rates(
+    notes: *const MinaCalcNote,
+    len: usize,
+    rates: *const f32,
+    rate_count: usize,
+    keys: u32,
+    mode: i32,
+    config: *const MinaCalcConfig,
+    out_scores: *mut MinaCalcScores,
+) -> MinaCalcStatus {
+    if rates.is_null() || out_scores.is_null() {
+        return MinaCalcStatus::NullPointer;
+    }
+    match catch_unwind(AssertUnwindSafe(|| {
+        let notes = unsafe { notes_from_raw(notes, len) }?;
+        validate(notes, keys)?;
+        if rate_count == 0 {
+            return Err(MinaCalcStatus::InvalidArgument);
+        }
+        let rates = unsafe { std::slice::from_raw_parts(rates, rate_count) };
+        let config = unsafe { config_from_raw(config) }?;
+        let notes: Vec<Note> = notes
+            .iter()
+            .map(|note| Note {
+                notes: note.notes,
+                row_time: note.row_time,
+            })
+            .collect();
+        let calc = Calc::with_config(config).map_err(|_| MinaCalcStatus::InvalidArgument)?;
+        calc.calc_rates(&notes, rates, keys, mode_from_raw(mode)?)
+            .map_err(|_| MinaCalcStatus::InvalidArgument)
+    })) {
+        Ok(Ok(scores)) => {
+            for (index, score) in scores.into_iter().enumerate() {
+                unsafe { out_scores.add(index).write(score.into()) };
+            }
             MinaCalcStatus::Ok
         }
         Ok(Err(status)) => status,
