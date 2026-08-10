@@ -330,7 +330,7 @@ dependencies = [
 
 [[package]]
 name = "minacalc-rs"
-version = "515.1.1"
+version = "515.1.2"
 dependencies = [
  "criterion",
  "minacalc-sys",
@@ -338,7 +338,7 @@ dependencies = [
 
 [[package]]
 name = "minacalc-sys"
-version = "515.1.1"
+version = "515.1.2"
 dependencies = [
  "bindgen",
  "cc",
