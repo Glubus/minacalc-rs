@@ -4,8 +4,15 @@
     <ImplicitUsings>enable</ImplicitUsings>
     <Nullable>enable</Nullable>
     <AllowUnsafeBlocks>true</AllowUnsafeBlocks>
-    <Version>0.1.0</Version>
-    <PackageId>MinaCalc</PackageId>
+    <Version>0.2.0</Version>
+    <PackageId>Glubus.MinaCalc</PackageId>
     <Description>.NET bindings for MinaCalc's stable Rust C ABI</Description>
+    <PackageLicenseExpression>MIT</PackageLicenseExpression>
+    <PackageReadmeFile>README.md</PackageReadmeFile>
+    <RepositoryUrl>https://github.com/Glubus/minacalc-rs</RepositoryUrl>
+    <PackageProjectUrl>https://github.com/Glubus/minacalc-rs/tree/master/bindings/csharp</PackageProjectUrl>
   </PropertyGroup>
+  <ItemGroup>
+    <None Include="../README.md" Pack="true" PackagePath="/README.md" />
+  </ItemGroup>
 </Project>

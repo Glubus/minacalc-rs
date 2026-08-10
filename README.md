@@ -28,7 +28,7 @@ vendored and compiled as part of `minacalc-sys`.
 
 ```toml
 [dependencies]
-minacalc-rs = "515.1"
+minacalc-rs = "515.2"
 ```
 
 The major version follows the MinaCalc algorithm version: `515.x` wraps
@@ -140,6 +140,9 @@ cargo build --release -p minacalc-bindings
 
 See the [bindings guide](bindings/README.md) for library names and loading
 instructions.
+
+Maintainers can publish all registries and native binaries from one version tag;
+see [RELEASING.md](RELEASING.md) for the required environments and credentials.
 
 ## Development
 

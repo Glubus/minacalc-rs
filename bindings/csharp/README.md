@@ -6,8 +6,7 @@
 ## Setup
 
 ```sh
-cargo build --release -p minacalc-bindings
-dotnet add reference bindings/csharp/MinaCalc/MinaCalc.csproj
+dotnet add package Glubus.MinaCalc --version 0.2.0
 ```
 
 Ensure the dynamic loader can find the output: add `target/release` to
@@ -40,3 +39,13 @@ and an absolute timestamp in seconds.
 Use `CalcConfig`, `Calculator.CalcAtRateDetailed`, and `Calculator.CalcRates`
 for tuning, grind-scaler metadata, and custom rate lists. A null
 `SsrRatingCap` disables the per-skillset cap.
+
+```csharp
+var config = new CalcConfig(
+    SsrGoalCap: 1.0f,
+    SsrRatingCap: null,
+    SkillsetScalers: new SkillsetScalers(Stream: 1.05f));
+var detailed = Calculator.CalcAtRateDetailed(notes, 1.0f, 0.98f, config: config);
+var customRates = Calculator.CalcRates(notes, [0.85f, 1.0f, 1.25f], config: config);
+Console.WriteLine($"{detailed.Scores.Overall} / {detailed.GrindScaler}");
+```

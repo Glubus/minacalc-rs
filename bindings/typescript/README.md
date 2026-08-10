@@ -7,13 +7,12 @@ Set `MINACALC_LIBRARY_PATH` to its absolute path before importing a binding.
 ## Node.js
 
 ```sh
-cd bindings/typescript
-npm install
-export MINACALC_LIBRARY_PATH="$PWD/../../target/release/libminacalc_bindings.so"
+npm install @glubus/minacalc
+export MINACALC_LIBRARY_PATH="$PWD/libminacalc_bindings.so"
 ```
 
 ```ts
-import { calcAtRate, calcAllRates } from "@minacalc/bindings/node";
+import { calcAtRate, calcAllRates } from "@glubus/minacalc/node";
 
 const notes = [
   { notes: 0b0001, rowTime: 0.00 },
@@ -29,7 +28,7 @@ The Node entry uses [`koffi`](https://koffi.dev/). Node 20+ is required.
 
 ## Deno and Bun
 
-Import `./src/deno.ts` in Deno or `@minacalc/bindings/bun` in Bun. Deno needs
+Import `npm:@glubus/minacalc/deno` in Deno or `@glubus/minacalc/bun` in Bun. Deno needs
 FFI and environment permissions:
 
 ```sh
@@ -46,3 +45,18 @@ Every runtime also exports `DEFAULT_CONFIG`, `calcAtRateDetailed`, and
 `calcRates`. Copy the default configuration before tweaking it; setting
 `ssrRatingCap` to `null` disables that cap. Detailed results include the
 effective `grindScaler`.
+
+```ts
+import { DEFAULT_CONFIG, calcAtRateDetailed, calcRates } from "@glubus/minacalc/node";
+
+const config = {
+  ...DEFAULT_CONFIG,
+  ssrGoalCap: 1.0,
+  ssrRatingCap: null,
+  skillsetScalers: { ...DEFAULT_CONFIG.skillsetScalers, stream: 1.05 },
+};
+
+const detailed = calcAtRateDetailed(notes, 1.0, 0.98, 4, "ssr", config);
+console.log(detailed.scores.overall, detailed.grindScaler);
+console.log(calcRates(notes, [0.85, 1.0, 1.25], 4, "msd", config));
+```

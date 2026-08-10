@@ -1,6 +1,6 @@
 [package]
 name = "minacalc-rs"
-version = "515.1.2"
+version = "515.2.0"
 edition = "2021"
 description = "Safe Rust wrapper for MinaCalc (Etterna difficulty calculator v515)"
 license = "MIT"
@@ -22,7 +22,7 @@ name = "multithread"
 path = "examples/multithread.rs"
 
 [dependencies]
-minacalc-sys = { version = "515.1.2", path = "../minacalc-sys" }
+minacalc-sys = { version = "515.2.0", path = "../minacalc-sys" }
 
 [dev-dependencies]
 criterion = { version = "0.8.2", features = ["html_reports"] }

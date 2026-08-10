@@ -4,12 +4,17 @@ build-backend = "hatchling.build"
 
 [project]
 name = "minacalc"
-version = "0.1.0"
+version = "0.2.0"
 description = "Python bindings for MinaCalc's stable Rust C ABI"
 readme = "README.md"
 requires-python = ">=3.9"
 license = { text = "MIT" }
+authors = [{ name = "Glubus" }]
 classifiers = ["Programming Language :: Python :: 3", "Typing :: Typed"]
+
+[project.urls]
+Repository = "https://github.com/Glubus/minacalc-rs"
+Documentation = "https://github.com/Glubus/minacalc-rs/tree/master/bindings/python"
 
 [tool.hatch.build.targets.wheel]
 packages = ["src/minacalc"]

@@ -8,7 +8,7 @@ difficulty calculator used by [Etterna](https://etternaonline.com). It builds on
 
 ```toml
 [dependencies]
-minacalc-rs = "515.1"
+minacalc-rs = "515.2"
 ```
 
 The major version follows the MinaCalc algorithm version. `515.x` wraps

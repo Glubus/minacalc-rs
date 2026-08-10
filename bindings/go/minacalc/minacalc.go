@@ -2,7 +2,7 @@
 package minacalc
 
 /*
-#cgo CFLAGS: -I${SRCDIR}/../../include
+#cgo CFLAGS: -I${SRCDIR}/../include
 #cgo LDFLAGS: -lminacalc_bindings
 #include "minacalc.h"
 */

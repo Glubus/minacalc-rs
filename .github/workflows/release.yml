@@ -3,141 +3,229 @@ name: Release
 on:
   push:
     tags:
-      - 'v*'
+      - "v*"
 
 permissions:
   contents: read
 
 jobs:
-  linux:
+  validate:
+    name: Validate release
     runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - uses: dtolnay/rust-toolchain@stable
+        with:
+          components: clippy, rustfmt
+      - uses: actions/setup-node@v4
+        with:
+          node-version: 20
+          cache: npm
+          cache-dependency-path: bindings/typescript/package-lock.json
+      - uses: actions/setup-python@v5
+        with:
+          python-version: "3.12"
+      - name: Verify tag and versions
+        shell: bash
+        run: |
+          crate_version=$(cargo pkgid -p minacalc-rs | sed 's/.*#//')
+          binding_version="0.$(cut -d. -f2 <<< "$crate_version").0"
+          test "v${crate_version}" = "${GITHUB_REF_NAME}"
+          test "$(node -p "require('./bindings/typescript/package.json').version")" = "$binding_version"
+          test "$(sed -n 's/^version = "\(.*\)"/\1/p' bindings/python/pyproject.toml | head -1)" = "$binding_version"
+          grep -q "<Version>${binding_version}</Version>" bindings/csharp/MinaCalc/MinaCalc.csproj
+          cmp bindings/include/minacalc.h bindings/go/include/minacalc.h
+      - run: cargo fmt --all -- --check
+      - run: cargo test --workspace --locked
+      - run: cargo clippy --workspace --all-targets --locked -- -D warnings
+      - name: Validate TypeScript package
+        working-directory: bindings/typescript
+        run: |
+          npm ci
+          npm run check
+          npm pack --dry-run
+      - name: Validate Python package
+        run: |
+          python -m pip install --upgrade build
+          python -m build bindings/python --outdir dist/python
+      - uses: actions/setup-dotnet@v4
+        with:
+          dotnet-version: "8.0.x"
+      - name: Validate NuGet package
+        run: dotnet pack bindings/csharp/MinaCalc/MinaCalc.csproj --configuration Release --output dist/nuget
+
+  native:
+    name: Native / ${{ matrix.name }}
+    needs: validate
     strategy:
+      fail-fast: false
       matrix:
-        target: [x86_64, aarch64]
+        include:
+          - name: linux-x86_64
+            os: ubuntu-latest
+            library: libminacalc_bindings.so
+          - name: linux-aarch64
+            os: ubuntu-24.04-arm
+            library: libminacalc_bindings.so
+          - name: macos-x86_64
+            os: macos-15-intel
+            library: libminacalc_bindings.dylib
+          - name: macos-aarch64
+            os: macos-15
+            library: libminacalc_bindings.dylib
+          - name: windows-x86_64
+            os: windows-latest
+            library: minacalc_bindings.dll
+    runs-on: ${{ matrix.os }}
     steps:
       - uses: actions/checkout@v4
-      - uses: actions/setup-python@v5
+      - uses: dtolnay/rust-toolchain@stable
+      - name: Build native library
+        run: cargo build --release --locked -p minacalc-bindings
+      - name: Archive native library
+        if: runner.os != 'Windows'
+        shell: bash
+        run: |
+          mkdir -p dist
+          tar -C target/release -czf "dist/minacalc-native-${{ matrix.name }}.tar.gz" "${{ matrix.library }}"
+      - name: Archive native library
+        if: runner.os == 'Windows'
+        shell: pwsh
+        run: |
+          New-Item -ItemType Directory -Force dist
+          Compress-Archive -Path "target/release/${{ matrix.library }}" -DestinationPath "dist/minacalc-native-${{ matrix.name }}.zip"
+      - uses: actions/upload-artifact@v4
         with:
-          python-version: '3.10'
-      - name: Build wheels
-        uses: PyO3/maturin-action@v1
-        with:
-          target: ${{ matrix.target }}
-          args: --release --out dist --manifest-path bindings/python/Cargo.toml
-          sccache: 'true'
-          manylinux: auto
-      - name: Upload wheels
-        uses: actions/upload-artifact@v4
-        with:
-          name: wheels-linux-${{ matrix.target }}
-          path: dist
+          name: native-${{ matrix.name }}
+          path: dist/*
+          if-no-files-found: error
 
-  windows:
-    runs-on: windows-latest
+  crates:
+    name: Publish crates.io
+    needs: validate
+    runs-on: ubuntu-latest
+    environment: crates-io
     steps:
       - uses: actions/checkout@v4
-      - uses: actions/setup-python@v5
-        with:
-          python-version: '3.10'
-          architecture: x64
-      - name: Build wheels
-        uses: PyO3/maturin-action@v1
-        with:
-          target: x64
-          args: --release --out dist --manifest-path bindings/python/Cargo.toml
-          sccache: 'true'
-      - name: Upload wheels
-        uses: actions/upload-artifact@v4
-        with:
-          name: wheels-windows
-          path: dist
+      - uses: dtolnay/rust-toolchain@stable
+      - name: Publish Rust crates in dependency order
+        env:
+          CARGO_REGISTRY_TOKEN: ${{ secrets.CARGO_REGISTRY_TOKEN }}
+        run: |
+          cargo publish --locked -p minacalc-sys
+          cargo publish --locked -p minacalc-rs
+          cargo publish --locked -p minacalc-bindings
 
-  macos:
-    runs-on: macos-latest
-    strategy:
-      matrix:
-        target: [x86_64, aarch64]
+  npm:
+    name: Publish npm
+    needs: validate
+    runs-on: ubuntu-latest
+    environment: npm
+    permissions:
+      contents: read
+      id-token: write
     steps:
       - uses: actions/checkout@v4
-      - uses: actions/setup-python@v5
+      - uses: actions/setup-node@v4
         with:
-          python-version: '3.10'
-      - name: Build wheels
-        uses: PyO3/maturin-action@v1
-        with:
-          target: ${{ matrix.target }}
-          args: --release --out dist --manifest-path bindings/python/Cargo.toml
-          sccache: 'true'
-      - name: Upload wheels
-        uses: actions/upload-artifact@v4
-        with:
-          name: wheels-macos-${{ matrix.target }}
-          path: dist
+          node-version: 20
+          registry-url: https://registry.npmjs.org
+          cache: npm
+          cache-dependency-path: bindings/typescript/package-lock.json
+      - name: Publish TypeScript package
+        working-directory: bindings/typescript
+        env:
+          NODE_AUTH_TOKEN: ${{ secrets.NPM_TOKEN }}
+        run: |
+          npm ci
+          npm publish --provenance --access public
 
-  sdist:
+  pypi-build:
+    name: Build Python package
+    needs: validate
     runs-on: ubuntu-latest
     steps:
       - uses: actions/checkout@v4
-      - name: Build sdist
-        uses: PyO3/maturin-action@v1
+      - uses: actions/setup-python@v5
         with:
-          command: sdist
-          args: --out dist --manifest-path bindings/python/Cargo.toml
-      - name: Upload sdist
-        uses: actions/upload-artifact@v4
+          python-version: "3.12"
+      - run: python -m pip install --upgrade build
+      - run: python -m build bindings/python --outdir dist
+      - uses: actions/upload-artifact@v4
         with:
-          name: wheels-sdist
-          path: dist
+          name: python-dist
+          path: dist/*
+          if-no-files-found: error
 
-  release:
-    name: Release PyPI
+  pypi:
+    name: Publish PyPI
+    needs: pypi-build
     runs-on: ubuntu-latest
-    if: "startsWith(github.ref, 'refs/tags/')"
-    needs: [linux, windows, macos, sdist]
+    environment: pypi
+    permissions:
+      id-token: write
     steps:
       - uses: actions/download-artifact@v4
         with:
-          pattern: wheels-*
+          name: python-dist
+          path: dist
+      - uses: pypa/gh-action-pypi-publish@release/v1
+
+  nuget:
+    name: Publish NuGet
+    needs: validate
+    runs-on: ubuntu-latest
+    environment: nuget
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-dotnet@v4
+        with:
+          dotnet-version: "8.0.x"
+      - name: Pack
+        run: dotnet pack bindings/csharp/MinaCalc/MinaCalc.csproj --configuration Release --output dist
+      - name: Publish
+        run: dotnet nuget push dist/*.nupkg --api-key "${{ secrets.NUGET_API_KEY }}" --source https://api.nuget.org/v3/index.json --skip-duplicate
+
+  go:
+    name: Publish Go module tag
+    needs: validate
+    runs-on: ubuntu-latest
+    environment: go
+    permissions:
+      contents: write
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          fetch-depth: 0
+      - name: Create submodule tag
+        shell: bash
+        run: |
+          version=$(node -p "require('./bindings/typescript/package.json').version")
+          tag="bindings/go/v${version}"
+          if ! git ls-remote --exit-code --tags origin "refs/tags/${tag}"; then
+            git tag "${tag}" "${GITHUB_SHA}"
+            git push origin "${tag}"
+          fi
+
+  github-release:
+    name: Publish native binaries
+    needs: native
+    runs-on: ubuntu-latest
+    permissions:
+      contents: write
+    steps:
+      - uses: actions/download-artifact@v4
+        with:
+          pattern: native-*
           merge-multiple: true
           path: dist
-      - name: Publish to PyPI
-        uses: PyO3/maturin-action@v1
+      - name: Create GitHub release and upload binaries
         env:
-          MATURIN_PYPI_TOKEN: ${{ secrets.PYPI_API_TOKEN }}
-        with:
-          command: upload
-          args: --non-interactive --skip-existing dist/*
-
-  publish-crate:
-    name: Publish Crate
-    runs-on: ubuntu-latest
-    if: "startsWith(github.ref, 'refs/tags/')"
-    steps:
-      - uses: actions/checkout@v4
-      - uses: dtolnay/rust-toolchain@stable
-      - name: Publish to Crates.io
-        run: cargo publish --token ${{ secrets.CARGO_REGISTRY_TOKEN }}
-
-  publish-nuget:
-    name: Publish NuGet
-    runs-on: windows-latest
-    if: "startsWith(github.ref, 'refs/tags/')"
-    steps:
-      - uses: actions/checkout@v4
-      - uses: dtolnay/rust-toolchain@stable
-        with:
-          targets: x86_64-pc-windows-msvc
-      - name: Build Rust Library
-        run: cargo build --release --features api
-      - name: Setup .NET
-        uses: actions/setup-dotnet@v4
-        with:
-          dotnet-version: '8.0.x'
-      - name: Pack C# Project
-        run: dotnet pack bindings/csharp/MinaCalc.csproj --configuration Release --output nuget_dist
-      - name: Publish to NuGet
-        shell: pwsh
+          GH_TOKEN: ${{ github.token }}
+        shell: bash
         run: |
-          Get-ChildItem nuget_dist/*.nupkg | ForEach-Object {
-            dotnet nuget push $_.FullName --api-key ${{ secrets.NUGET_API_KEY }} --source https://api.nuget.org/v3/index.json --skip-duplicate
-          }
+          if gh release view "${GITHUB_REF_NAME}" >/dev/null 2>&1; then
+            gh release upload "${GITHUB_REF_NAME}" dist/* --clobber
+          else
+            gh release create "${GITHUB_REF_NAME}" dist/* --verify-tag --generate-notes
+          fi
