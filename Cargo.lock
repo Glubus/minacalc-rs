@@ -1041,14 +1041,14 @@ checksum = "6877bb514081ee2a7ff5ef9de3281f14a4dd4bceac4c09388074a6b5df8a139a"
 
 [[package]]
 name = "minacalc-bindings"
-version = "515.3.0"
+version = "527.0.0"
 dependencies = [
  "minacalc-rs",
 ]
 
 [[package]]
 name = "minacalc-rs"
-version = "515.3.0"
+version = "527.0.0"
 dependencies = [
  "criterion",
  "minacalc-sys",
@@ -1056,7 +1056,7 @@ dependencies = [
 
 [[package]]
 name = "minacalc-sys"
-version = "515.3.0"
+version = "527.0.0"
 dependencies = [
  "bindgen",
  "cc",

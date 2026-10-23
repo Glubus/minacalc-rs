@@ -29,7 +29,13 @@ jobs:
         shell: bash
         run: |
           crate_version=$(cargo pkgid -p minacalc-rs | sed 's/.*#//')
-          binding_version="0.$(cut -d. -f2 <<< "$crate_version").0"
+          # Wrapper major = MinaCalc generation (515 -> 0, 527 -> 1), wrapper minor = crate minor.
+          case "$(cut -d. -f1 <<< "$crate_version")" in
+            515) binding_major=0 ;;
+            527) binding_major=1 ;;
+            *) echo "no wrapper major for MinaCalc $crate_version" >&2; exit 1 ;;
+          esac
+          binding_version="${binding_major}.$(cut -d. -f2 <<< "$crate_version").0"
           test "v${crate_version}" = "${GITHUB_REF_NAME}"
           test "$(node -p "require('./bindings/typescript/package.json').version")" = "$binding_version"
           test "$(sed -n 's/^version = "\(.*\)"/\1/p' bindings/python/pyproject.toml | head -1)" = "$binding_version"

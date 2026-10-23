@@ -4,7 +4,7 @@
 [![Documentation](https://docs.rs/minacalc-rs/badge.svg)](https://docs.rs/minacalc-rs)
 [![License: MIT](https://img.shields.io/badge/License-MIT-yellow.svg)](https://opensource.org/licenses/MIT)
 
-Rust and multi-language bindings for MinaCalc v515, the difficulty calculator
+Rust and multi-language bindings for MinaCalc v527, the difficulty calculator
 used by [Etterna](https://etternaonline.com). The original C++ calculator is
 vendored and compiled as part of `minacalc-sys`.
 
@@ -29,11 +29,11 @@ vendored and compiled as part of `minacalc-sys`.
 
 ```toml
 [dependencies]
-minacalc-rs = "515.3"
+minacalc-rs = "527.0"
 ```
 
-The major version follows the MinaCalc algorithm version: `515.x` wraps
-MinaCalc v515.
+The major version follows the MinaCalc algorithm version: `527.x` wraps
+MinaCalc v527.
 
 ## Quick start
 
