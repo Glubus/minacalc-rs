@@ -81,6 +81,9 @@ fn main() {
     // Détecter le compilateur et ajouter les flags appropriés
     let target = env::var("TARGET").unwrap_or_default();
     build.define("STANDALONE_CALC", None);
+    // As in Etterna's release builds: a failed C `assert` calls abort(), which no try/catch stops, and cc never defines
+    // NDEBUG by itself, so without it a debug check of MinaCalc could end the whole program in every profile.
+    build.define("NDEBUG", None);
     if target.contains("msvc") {
         build.flag("/std:c++20");
         // C++ exceptions are caught in Guarded.cpp: the unwind tables must exist (cc may not add /EHsc by itself).
