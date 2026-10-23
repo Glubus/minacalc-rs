@@ -359,6 +359,34 @@ mod tests {
         assert_eq!(Calc::version(), 527);
     }
 
+    /// MinaCalc 527 gives the middle column of an odd key count to the left hand; a row count that left it out broke a C
+    /// `assert` (which aborts the process, past any try/catch) on every 7K row with a middle note. Rows of one column each,
+    /// the middle one included, and rows of all seven columns must rate.
+    #[test]
+    fn seven_key_charts_with_middle_column_notes_rate() {
+        let calc = Calc::new().expect("calculator allocation should succeed");
+        let columns: Vec<Note> = (0..700)
+            .map(|index| Note {
+                notes: 1 << (index % 7),
+                row_time: index as f32 * 0.1,
+            })
+            .collect();
+        let scores = calc
+            .calc_at_rate(&columns, 1.0, 0.93, 7, CalcMode::Msd)
+            .expect("a 7K stream through every column rates");
+        assert!(scores.overall > 0.0);
+        let all_seven: Vec<Note> = (0..300)
+            .map(|index| Note {
+                notes: 0b111_1111,
+                row_time: index as f32 * 0.25,
+            })
+            .collect();
+        assert!(calc
+            .calc_at_rate(&all_seven, 1.0, 0.93, 7, CalcMode::Msd)
+            .is_ok());
+        assert!(calc.calc_all_rates(&all_seven, 7, CalcMode::Msd).is_ok());
+    }
+
     fn stream(note_count: usize, notes_per_second: f32) -> Vec<Note> {
         let row_duration = 1.0 / notes_per_second;
         (0..note_count)

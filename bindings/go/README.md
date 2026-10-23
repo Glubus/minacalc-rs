@@ -5,7 +5,7 @@ Go 1.22+ bindings using cgo and the stable `minacalc.h` ABI.
 ## Build and run
 
 ```sh
-go get github.com/Glubus/minacalc-rs/bindings/go@v1.0.0
+go get github.com/Glubus/minacalc-rs/bindings/go@v1.1.0
 export CGO_LDFLAGS="-L$PWD"
 export LD_LIBRARY_PATH="$PWD:$LD_LIBRARY_PATH" # Linux; native library downloaded here
 go test ./...
