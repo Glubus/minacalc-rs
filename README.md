@@ -29,7 +29,7 @@ vendored and compiled as part of `minacalc-sys`.
 
 ```toml
 [dependencies]
-minacalc-rs = "515.2"
+minacalc-rs = "515.3"
 ```
 
 The major version follows the MinaCalc algorithm version: `515.x` wraps

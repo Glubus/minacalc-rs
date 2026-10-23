@@ -73,6 +73,7 @@ fn main() {
     build
         .cpp(true)
         .file(patched.c_code.join("API.cpp"))
+        .file(patched.c_code.join("Guarded.cpp"))
         .file(patched.c_code.join("MinaCalc/MinaCalc.cpp"))
         .include(&patched.c_code)
         .include(patched.c_code.join("MinaCalc"));
@@ -82,6 +83,8 @@ fn main() {
     build.define("STANDALONE_CALC", None);
     if target.contains("msvc") {
         build.flag("/std:c++20");
+        // C++ exceptions are caught in Guarded.cpp: the unwind tables must exist (cc may not add /EHsc by itself).
+        build.flag("/EHsc");
         build.flag("/W0");
     } else {
         build.flag("-std=c++20");
@@ -93,7 +96,7 @@ fn main() {
 
     // Générer les bindings FFI
     let bindings = bindgen::Builder::default()
-        .header(patched.c_code.join("API.h").to_string_lossy())
+        .header(patched.c_code.join("Guarded.h").to_string_lossy())
         .clang_arg("-x")
         .clang_arg("c++")
         .clang_arg("-std=c++20")
@@ -110,6 +113,8 @@ fn main() {
     // Indiquer à Cargo de recompiler si les fichiers C++ changent
     println!("cargo:rerun-if-changed=c_code/API.h");
     println!("cargo:rerun-if-changed=c_code/API.cpp");
+    println!("cargo:rerun-if-changed=c_code/Guarded.h");
+    println!("cargo:rerun-if-changed=c_code/Guarded.cpp");
     println!("cargo:rerun-if-changed=c_code/Models/NoteData/NoteDataStructures.h");
     println!("cargo:rerun-if-changed=c_code/MinaCalc/MinaCalc.cpp");
     println!("cargo:rerun-if-changed=c_code/MinaCalc/MinaCalc.h");
