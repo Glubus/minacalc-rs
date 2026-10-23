@@ -28,7 +28,7 @@ Released versions provide the same files as archives on the corresponding
 GitHub Release. For example on Linux:
 
 ```sh
-gh release download v515.2.0 -R Glubus/minacalc-rs \
+gh release download v515.3.0 -R Glubus/minacalc-rs \
   -p 'minacalc-native-linux-x86_64.tar.gz'
 tar -xzf minacalc-native-linux-x86_64.tar.gz
 export MINACALC_LIBRARY_PATH="$PWD/libminacalc_bindings.so"
@@ -69,7 +69,7 @@ defaults; a nullable rating cap disables that cap cleanly.
 | --- | --- |
 | TypeScript | `npm install @glubus/minacalc` |
 | Python | `python -m pip install minacalc` |
-| .NET | `dotnet add package Glubus.MinaCalc --version 0.2.0` |
-| Go | `go get github.com/Glubus/minacalc-rs/bindings/go@v0.2.0` |
+| .NET | `dotnet add package Glubus.MinaCalc --version 0.3.0` |
+| Go | `go get github.com/Glubus/minacalc-rs/bindings/go@v0.3.0` |
 
 See each linked README for a complete single-rate and configurable example.
