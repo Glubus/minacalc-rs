@@ -354,6 +354,11 @@ impl Drop for Calc {
 mod tests {
     use super::*;
 
+    #[test]
+    fn the_vendored_calculator_is_minacalc_527() {
+        assert_eq!(Calc::version(), 527);
+    }
+
     fn stream(note_count: usize, notes_per_second: f32) -> Vec<Note> {
         let row_duration = 1.0 / notes_per_second;
         (0..note_count)

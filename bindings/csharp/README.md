@@ -6,7 +6,7 @@
 ## Setup
 
 ```sh
-dotnet add package Glubus.MinaCalc --version 0.3.0
+dotnet add package Glubus.MinaCalc --version 1.0.0
 ```
 
 Ensure the dynamic loader can find the output: add `target/release` to

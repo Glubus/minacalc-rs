@@ -1,6 +1,6 @@
 # minacalc-sys
 
-Raw generated Rust bindings for the vendored MinaCalc v515 C++ calculator.
+Raw generated Rust bindings for the vendored MinaCalc v527 C++ calculator.
 This crate exposes unsafe FFI directly. Prefer
 [`minacalc-rs`](../minacalc-rs) for a safe Rust API.
 
@@ -11,8 +11,8 @@ source and the reproducible adaptations without editing either in place.
 
 ## Versioning
 
-The major crate version follows the MinaCalc algorithm version. `515.x` wraps
-MinaCalc v515.
+The major crate version follows the MinaCalc algorithm version. `527.x` wraps
+MinaCalc v527.
 
 ## Exposed API
 

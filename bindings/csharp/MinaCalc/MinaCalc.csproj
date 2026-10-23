@@ -4,7 +4,7 @@
     <ImplicitUsings>enable</ImplicitUsings>
     <Nullable>enable</Nullable>
     <AllowUnsafeBlocks>true</AllowUnsafeBlocks>
-    <Version>0.3.0</Version>
+    <Version>1.0.0</Version>
     <PackageId>Glubus.MinaCalc</PackageId>
     <Description>.NET bindings for MinaCalc's stable Rust C ABI</Description>
     <PackageLicenseExpression>MIT</PackageLicenseExpression>

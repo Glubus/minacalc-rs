@@ -1,8 +1,8 @@
 [package]
 name = "minacalc-rs"
-version = "515.3.0"
+version = "527.0.0"
 edition = "2021"
-description = "Safe Rust wrapper for MinaCalc (Etterna difficulty calculator v515)"
+description = "Safe Rust wrapper for MinaCalc (Etterna difficulty calculator v527)"
 license = "MIT"
 authors = ["Glubus <mael.chevalleraud@gmail.com>"]
 repository = "https://github.com/Glubus/minacalc-rs"
@@ -22,7 +22,7 @@ name = "multithread"
 path = "examples/multithread.rs"
 
 [dependencies]
-minacalc-sys = { version = "515.3.0", path = "../minacalc-sys" }
+minacalc-sys = { version = "527.0.0", path = "../minacalc-sys" }
 
 [dev-dependencies]
 criterion = { version = "0.8.2", features = ["html_reports"] }

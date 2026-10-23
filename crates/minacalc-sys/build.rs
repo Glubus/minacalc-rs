@@ -110,22 +110,8 @@ fn main() {
         .write_to_file(out_path.join("bindings.rs"))
         .expect("Couldn't write bindings!");
 
-    // Indiquer à Cargo de recompiler si les fichiers C++ changent
-    println!("cargo:rerun-if-changed=c_code/API.h");
-    println!("cargo:rerun-if-changed=c_code/API.cpp");
-    println!("cargo:rerun-if-changed=c_code/Guarded.h");
-    println!("cargo:rerun-if-changed=c_code/Guarded.cpp");
-    println!("cargo:rerun-if-changed=c_code/Models/NoteData/NoteDataStructures.h");
-    println!("cargo:rerun-if-changed=c_code/MinaCalc/MinaCalc.cpp");
-    println!("cargo:rerun-if-changed=c_code/MinaCalc/MinaCalc.h");
-    println!("cargo:rerun-if-changed=c_code/MinaCalc/MinaCalcHelpers.h");
-    println!("cargo:rerun-if-changed=c_code/MinaCalc/UlbuAcolytes.h");
-    println!("cargo:rerun-if-changed=c_code/MinaCalc/UlbuBase.h");
-    println!("cargo:rerun-if-changed=c_code/MinaCalc/UlbuSevenKey.h");
-    println!("cargo:rerun-if-changed=c_code/MinaCalc/UlbuSixKey.h");
-    println!("cargo:rerun-if-changed=c_code/MinaCalc/Ulbu.h");
-    println!("cargo:rerun-if-changed=c_code/MinaCalc/SequencingHelpers.h");
-    println!("cargo:rerun-if-changed=c_code/MinaCalc/Agnostic/IntervalInfo.h");
+    // Recompile when any MinaCalc source changes (Cargo scans the directories recursively).
+    println!("cargo:rerun-if-changed=c_code");
     println!("cargo:rerun-if-changed=patches/configurable-calc.patch");
 
     // Définir des types conditionnels pour unsigned long

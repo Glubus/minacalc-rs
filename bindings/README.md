@@ -1,6 +1,6 @@
 # MinaCalc bindings
 
-Official multi-language bindings for the MinaCalc v515 difficulty calculator.
+Official multi-language bindings for the MinaCalc v527 difficulty calculator.
 Every package calls the `minacalc-bindings` Rust crate through the stable C ABI
 in [`include/minacalc.h`](include/minacalc.h). They never use the C++ source
 tree directly.
@@ -28,7 +28,7 @@ Released versions provide the same files as archives on the corresponding
 GitHub Release. For example on Linux:
 
 ```sh
-gh release download v515.3.0 -R Glubus/minacalc-rs \
+gh release download v527.0.0 -R Glubus/minacalc-rs \
   -p 'minacalc-native-linux-x86_64.tar.gz'
 tar -xzf minacalc-native-linux-x86_64.tar.gz
 export MINACALC_LIBRARY_PATH="$PWD/libminacalc_bindings.so"
@@ -69,7 +69,7 @@ defaults; a nullable rating cap disables that cap cleanly.
 | --- | --- |
 | TypeScript | `npm install @glubus/minacalc` |
 | Python | `python -m pip install minacalc` |
-| .NET | `dotnet add package Glubus.MinaCalc --version 0.3.0` |
-| Go | `go get github.com/Glubus/minacalc-rs/bindings/go@v0.3.0` |
+| .NET | `dotnet add package Glubus.MinaCalc --version 1.0.0` |
+| Go | `go get github.com/Glubus/minacalc-rs/bindings/go@v1.0.0` |
 
 See each linked README for a complete single-rate and configurable example.

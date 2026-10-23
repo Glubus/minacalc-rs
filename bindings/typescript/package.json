@@ -1,6 +1,6 @@
 {
   "name": "@glubus/minacalc",
-  "version": "0.3.0",
+  "version": "1.0.0",
   "description": "TypeScript bindings for MinaCalc: Node.js, Bun, and Deno",
   "license": "MIT",
   "repository": {

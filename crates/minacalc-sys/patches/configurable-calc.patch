@@ -116,10 +116,10 @@ index 25048d1..4ecaaeb 100644
  #ifdef __cplusplus
  }
 diff --git a/crates/minacalc-sys/c_code/MinaCalc/MinaCalc.cpp b/crates/minacalc-sys/c_code/MinaCalc/MinaCalc.cpp
-index 7968349..5af1b80 100644
+index d5d7bf0..6f9f7d9 100644
 --- a/crates/minacalc-sys/c_code/MinaCalc/MinaCalc.cpp
 +++ b/crates/minacalc-sys/c_code/MinaCalc/MinaCalc.cpp
-@@ -52,6 +52,7 @@ Calc::CalcMain(const std::vector<NoteInfo>& NoteInfo,
+@@ -53,6 +53,7 @@ Calc::CalcMain(const std::vector<NoteInfo>& NoteInfo,
  			   const float music_rate,
  			   const float score_goal) -> std::vector<float>
  {
@@ -127,7 +127,7 @@ index 7968349..5af1b80 100644
  
  	InitializeKeycountLogic();
  	const auto& basescalers = ulbu_in_charge->get_basescalers();
-@@ -184,19 +185,25 @@ Calc::CalcMain(const std::vector<NoteInfo>& NoteInfo,
+@@ -187,19 +188,25 @@ Calc::CalcMain(const std::vector<NoteInfo>& NoteInfo,
  			}
  		}
  
@@ -157,7 +157,7 @@ index 7968349..5af1b80 100644
  				}
  			}
  		}
-@@ -237,12 +244,13 @@ Calc::CalcMain(const std::vector<NoteInfo>& NoteInfo,
+@@ -240,12 +247,13 @@ Calc::CalcMain(const std::vector<NoteInfo>& NoteInfo,
  			highest_final_ssv = output[i];
  		}
  	}
@@ -172,7 +172,7 @@ index 7968349..5af1b80 100644
  	}
  	return output;
  }
-@@ -885,7 +893,10 @@ MinaSDCalc(const std::vector<NoteInfo>& NoteInfo,
+@@ -893,7 +901,10 @@ MinaSDCalc(const std::vector<NoteInfo>& NoteInfo,
  	calc->debugmode = false;
  	calc->keycount = keycount;
  
@@ -184,7 +184,7 @@ index 7968349..5af1b80 100644
  }
  
  // Wrap difficulty calculation for all standard rates
-@@ -896,6 +907,7 @@ MinaSDCalc(const std::vector<NoteInfo>& NoteInfo,
+@@ -904,6 +915,7 @@ MinaSDCalc(const std::vector<NoteInfo>& NoteInfo,
  		   Calc* calc) -> MinaSD
  {
  	MinaSD allrates;
@@ -192,7 +192,7 @@ index 7968349..5af1b80 100644
  	const auto lower_rate = 7; // 0.7x
  	const auto upper_rate = 21; // up to 2.1x (not including 2.1x)
  
-@@ -905,7 +917,9 @@ MinaSDCalc(const std::vector<NoteInfo>& NoteInfo,
+@@ -913,7 +925,9 @@ MinaSDCalc(const std::vector<NoteInfo>& NoteInfo,
  		calc->keycount = keycount;
  		for (auto i = lower_rate; i < upper_rate; i++) {
  			allrates.emplace_back(calc->CalcMain(
@@ -203,7 +203,7 @@ index 7968349..5af1b80 100644
  		}
  	} else {
  		for (auto i = lower_rate; i < upper_rate; i++) {
-@@ -934,7 +948,7 @@ MinaSDCalcDebug(
+@@ -942,7 +956,7 @@ MinaSDCalcDebug(
  	calc.debugmode = true;
  	calc.ssr = true;
  	calc.keycount = keycount;
@@ -212,7 +212,7 @@ index 7968349..5af1b80 100644
  	make_debug_strings(calc, debugstrings);
  
  	handInfo.emplace_back(calc.debugValues.at(left_hand));
-@@ -998,7 +1012,7 @@ webcalc(Php::Parameters& parameters)
+@@ -1006,7 +1020,7 @@ webcalc(Php::Parameters& parameters)
  			ssr =
  			  calc->CalcMain(newVector,
  							 rate,
@@ -285,7 +285,7 @@ index 03e3f6a..0448bcd 100644
  	unsigned keycount = 4;
  	std::array<unsigned, num_hands> hand_col_masks = { 0U, 0U };
 diff --git a/crates/minacalc-sys/c_code/MinaCalc/MinaCalcHelpers.h b/crates/minacalc-sys/c_code/MinaCalc/MinaCalcHelpers.h
-index 5b6fecf..0662f02 100644
+index 5c36bb1..a83e434 100644
 --- a/crates/minacalc-sys/c_code/MinaCalc/MinaCalcHelpers.h
 +++ b/crates/minacalc-sys/c_code/MinaCalc/MinaCalcHelpers.h
 @@ -6,9 +6,7 @@
