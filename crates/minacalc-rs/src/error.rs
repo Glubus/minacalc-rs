@@ -12,6 +12,10 @@ pub enum Error {
     InvalidConfig(&'static str),
     /// A calculation argument was outside its accepted domain.
     InvalidArgument(&'static str),
+    /// The C++ calculator threw an exception (caught on the C++ side, never let into Rust).
+    CalcThrew,
+    /// The C++ calculator answered fewer values than a rating has.
+    CalcIncomplete,
 }
 
 impl fmt::Display for Error {
@@ -22,6 +26,8 @@ impl fmt::Display for Error {
             Error::EmptyRates => write!(f, "rates slice is empty"),
             Error::InvalidConfig(message) => write!(f, "invalid calculator config: {message}"),
             Error::InvalidArgument(message) => write!(f, "invalid calculation argument: {message}"),
+            Error::CalcThrew => write!(f, "MinaCalc failed on this chart (C++ exception caught)"),
+            Error::CalcIncomplete => write!(f, "MinaCalc returned an incomplete rating"),
         }
     }
 }

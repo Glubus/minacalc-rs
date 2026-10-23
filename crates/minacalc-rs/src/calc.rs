@@ -176,8 +176,9 @@ impl Calc {
         mode: CalcMode,
     ) -> Result<SkillsetScores, Error> {
         validate_calculation(notes, rate, goal, keys)?;
-        let result = unsafe {
-            minacalc_sys::calc_at_rate(
+        let mut result: minacalc_sys::Ssr = unsafe { std::mem::zeroed() };
+        let code = unsafe {
+            minacalc_sys::guarded_calc_at_rate(
                 self.handle,
                 notes.as_ptr().cast(),
                 notes.len(),
@@ -185,8 +186,10 @@ impl Calc {
                 goal,
                 keys,
                 mode.into(),
+                &mut result,
             )
         };
+        guarded(code)?;
         Ok(result.into())
     }
 
@@ -227,8 +230,8 @@ impl Calc {
         let mut output: Vec<minacalc_sys::Ssr> = (0..rates.len())
             .map(|_| unsafe { std::mem::zeroed() })
             .collect();
-        unsafe {
-            minacalc_sys::calc_rates(
+        let code = unsafe {
+            minacalc_sys::guarded_calc_rates(
                 self.handle,
                 notes.as_ptr().cast(),
                 notes.len(),
@@ -237,8 +240,9 @@ impl Calc {
                 keys,
                 mode.into(),
                 output.as_mut_ptr(),
-            );
-        }
+            )
+        };
+        guarded(code)?;
         Ok(output.into_iter().map(SkillsetScores::from).collect())
     }
 
@@ -253,15 +257,18 @@ impl Calc {
         mode: CalcMode,
     ) -> Result<AllRates, Error> {
         validate_notes_and_keys(notes, keys)?;
-        let result = unsafe {
-            minacalc_sys::calc_all_rates(
+        let mut result: minacalc_sys::MsdForAllRates = unsafe { std::mem::zeroed() };
+        let code = unsafe {
+            minacalc_sys::guarded_calc_all_rates(
                 self.handle,
                 notes.as_ptr().cast(),
                 notes.len(),
                 keys,
                 mode.into(),
+                &mut result,
             )
         };
+        guarded(code)?;
         Ok(result.into())
     }
 }
@@ -276,7 +283,50 @@ fn validate_notes_and_keys(notes: &[Note], keys: u32) -> Result<(), Error> {
     if notes.iter().any(|note| !note.row_time.is_finite()) {
         return Err(Error::InvalidArgument("note times must be finite"));
     }
+    // Safety first (Prism, 2026-10-22): what MinaCalc cannot handle is refused here, before the C++ runs.
+    if notes.iter().any(|note| note.row_time < 0.0) {
+        return Err(Error::InvalidArgument("note times must not be negative"));
+    }
+    if notes
+        .windows(2)
+        .any(|pair| pair[1].row_time < pair[0].row_time)
+    {
+        return Err(Error::InvalidArgument("note rows must be in time order"));
+    }
+    if notes
+        .windows(2)
+        .any(|pair| pair[1].row_time - pair[0].row_time > MAX_ROW_GAP_S)
+    {
+        return Err(Error::InvalidArgument(
+            "two note rows are more than 1e6 s apart",
+        ));
+    }
+    let columns = if keys >= 32 {
+        u32::MAX
+    } else {
+        (1u32 << keys) - 1
+    };
+    if notes
+        .iter()
+        .any(|note| note.notes == 0 || note.notes & !columns != 0)
+    {
+        return Err(Error::InvalidArgument(
+            "a note row is empty or uses a column beyond the key count",
+        ));
+    }
     Ok(())
+}
+
+/// The longest gap between two note rows MinaCalc is given (seconds): it aborts the process on far longer ones (measured from about 5e7 s).
+const MAX_ROW_GAP_S: f32 = 1.0e6;
+
+/// The answer of a `guarded_*` C++ entry point as a result.
+fn guarded(code: std::os::raw::c_int) -> Result<(), Error> {
+    match code {
+        0 => Ok(()),
+        2 => Err(Error::CalcIncomplete),
+        _ => Err(Error::CalcThrew),
+    }
 }
 
 fn validate_calculation(notes: &[Note], rate: f32, goal: f32, keys: u32) -> Result<(), Error> {
@@ -325,6 +375,87 @@ mod tests {
             scores.chordjack,
             scores.technical,
         ]
+    }
+
+    /// Safety first: what MinaCalc cannot handle is a Rust error before the C++ runs, never an abort.
+    #[test]
+    fn inputs_minacalc_cannot_handle_are_refused_before_the_cpp() {
+        let calc = Calc::new().expect("calculator allocation should succeed");
+        let mut early = stream(64, 8.0);
+        early[0].row_time = -0.935;
+        let mut reversed = stream(64, 8.0);
+        reversed.swap(10, 20);
+        let mut far = stream(64, 8.0);
+        far[63].row_time = 5.0e7;
+        let mut wide = stream(64, 8.0);
+        wide[3].notes = 1 << 6;
+        let mut empty_row = stream(64, 8.0);
+        empty_row[5].notes = 0;
+        for notes in [early, reversed, far, wide, empty_row] {
+            assert!(matches!(
+                calc.calc_at_rate(&notes, 1.0, 0.93, 4, CalcMode::Msd),
+                Err(Error::InvalidArgument(_))
+            ));
+        }
+    }
+
+    /// The chart that aborted the game (a note before time zero) given to the C++ WITHOUT the Rust checks: MinaCalc throws, the guarded entry
+    /// point catches it on the C++ side and answers 1. Before the guard this test aborted the whole test process.
+    #[test]
+    fn a_cpp_exception_is_caught_on_the_cpp_side() {
+        let calc = Calc::new().expect("calculator allocation should succeed");
+        let mut early = stream(64, 8.0);
+        early[0].row_time = -0.935;
+        let mut out: minacalc_sys::Ssr = unsafe { std::mem::zeroed() };
+        let code = unsafe {
+            minacalc_sys::guarded_calc_at_rate(
+                calc.handle,
+                early.as_ptr().cast(),
+                early.len(),
+                1.0,
+                0.93,
+                4,
+                CalcMode::Msd.into(),
+                &mut out,
+            )
+        };
+        assert_eq!(code, 1, "MinaCalc threw and the C++ caught it");
+        assert!(matches!(guarded(code), Err(Error::CalcThrew)));
+        // The same calculator still rates afterwards.
+        assert!(calc
+            .calc_at_rate(&stream(500, 8.0), 1.0, 0.93, 4, CalcMode::Msd)
+            .is_ok());
+    }
+
+    /// The guarded entry points still rate an ordinary chart, and odd but valid ones (one row, every row at once) answer without aborting.
+    #[test]
+    fn the_guarded_entry_points_rate_ordinary_and_odd_charts() {
+        let calc = Calc::new().expect("calculator allocation should succeed");
+        let scores = calc
+            .calc_at_rate(&stream(500, 8.0), 1.0, 0.93, 4, CalcMode::Msd)
+            .expect("a stream rates");
+        assert!(scores.overall > 0.0);
+        assert!(calc
+            .calc_all_rates(&stream(500, 8.0), 4, CalcMode::Msd)
+            .is_ok());
+        assert_eq!(
+            calc.calc_rates(&stream(500, 8.0), &[1.0, 1.5], 4, CalcMode::Msd)
+                .expect("two rates")
+                .len(),
+            2
+        );
+        let one = [Note {
+            notes: 1,
+            row_time: 0.0,
+        }];
+        let _ = calc.calc_at_rate(&one, 1.0, 0.93, 4, CalcMode::Msd);
+        let chord: Vec<Note> = (0..2000)
+            .map(|_| Note {
+                notes: 0b1111,
+                row_time: 1.0,
+            })
+            .collect();
+        let _ = calc.calc_at_rate(&chord, 2.0, 0.93, 4, CalcMode::Msd);
     }
 
     #[test]
